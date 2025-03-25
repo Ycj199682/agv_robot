@@ -1,0 +1,3 @@
+package com.reeman.commons.exceptions
+
+class ReconnectUsbDeviceTimeoutException:IllegalStateException()
