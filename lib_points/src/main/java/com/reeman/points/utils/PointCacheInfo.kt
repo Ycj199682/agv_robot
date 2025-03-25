@@ -142,6 +142,10 @@ object PointCacheInfo {
         return points.filter { it.type in types }.sortedBy { it.name }
     }
 
+    fun getPointListByType2(allPointList:List<GenericPoint>, types: List<String>): List<GenericPoint> {
+        return allPointList.filter { it.type in types }.sortedBy { it.name }
+    }
+
     /**
      * 更新当前楼层的点位和路线
      */
@@ -183,6 +187,15 @@ object PointCacheInfo {
         types: List<String> = arrayListOf(GenericPoint.DELIVERY),
     ): List<GenericPoint> {
         return checkPointsGeneric(points, types, { it.type }) { GenericPoint(it) }
+    }
+
+    /**
+     * 获取所有点位
+     */
+    fun getAllPoints(
+        points: List<Point>
+    ): List<GenericPoint> {
+        return getAllPoints(points, { it.type }) { GenericPoint(it) }
     }
 
     /**
@@ -383,7 +396,7 @@ object PointCacheInfo {
         val productionPointList = points.filter { genericPointGetter(it) == GenericPoint.PRODUCT }
         val chargePoint = points.find { genericPointGetter(it) == GenericPoint.CHARGE }?.let {
             chargePoint = Pair("", genericPointCreator(it))
-            Timber.d("充电桩 : $chargePoint")
+            Timber.tag("mylog").d("充电桩 : $chargePoint")
         }
         if (productionPointList.isEmpty() || chargePoint == null) {
             throw RequiredPointsNotFoundException(
@@ -392,9 +405,39 @@ object PointCacheInfo {
             )
         }
         productionPoints = productionPointList.map { "" to genericPointCreator(it) }
-        Timber.w("出品点: $productionPoints")
+        Timber.tag("mylog").w("出品点: $productionPoints")
         this.points = points.map { genericPointCreator(it) }.toMutableList()
+        Timber.tag("mylog").w("points: %s", this.points)
         return getPointListByType(types)
+    }
+
+    private fun <T> getAllPoints(
+        points: List<T>,
+        genericPointGetter: (T) -> String,
+        genericPointCreator: (T) -> GenericPoint
+    ): List<GenericPoint> {
+        val chargePointCount = points.count { genericPointGetter(it) == GenericPoint.CHARGE }
+        if (chargePointCount != 1) {
+            throw ChargingPointCountException(
+                chargePointCount,
+                ChargingPointCountException.FIXED_PATH_MODEL
+            )
+        }
+        val productionPointList = points.filter { genericPointGetter(it) == GenericPoint.PRODUCT }
+        val chargePoint = points.find { genericPointGetter(it) == GenericPoint.CHARGE }?.let {
+            chargePoint = Pair("", genericPointCreator(it))
+            Timber.tag("mylog").d("充电桩 : $chargePoint")
+        }
+        if (productionPointList.isEmpty() || chargePoint == null) {
+            throw RequiredPointsNotFoundException(
+                productionPointList.isNotEmpty(),
+                chargePoint != null
+            )
+        }
+        productionPoints = productionPointList.map { "" to genericPointCreator(it) }
+        Timber.tag("mylog").w("出品点: $productionPoints")
+        this.points = points.map { genericPointCreator(it) }.toMutableList()
+        return this.points
     }
 
     fun checkIsChargePointMarked(points: List<Point>) {

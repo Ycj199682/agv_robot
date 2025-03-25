@@ -30,6 +30,7 @@ object PointCacheUtil {
 
     @Throws
     fun checkAutoPathModelChargePoint(ip: String, map: String? = null) {
+        Timber.tag("mylog").d("ip:${ip}")
         val response = if (map.isNullOrBlank()) {
             fetchPoints(ip)
         } else {
