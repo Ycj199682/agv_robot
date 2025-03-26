@@ -16,9 +16,11 @@ import com.reeman.commons.state.TaskMode
 import com.reeman.dao.repository.entities.RouteWithPoints
 import com.reeman.points.model.custom.GenericPoint
 import com.reeman.points.model.custom.GenericPointsWithMap
+import com.reeman.points.model.request.ApiResponse
 import com.reeman.points.process.PointRefreshProcessor
 import com.reeman.points.process.callback.RefreshPointDataCallback
 import com.reeman.points.process.impl.DeliveryPointsRefreshProcessingStrategy
+import com.reeman.points.process.impl.DeliveryPointsRefreshProcessingStrategy.Positions
 import com.reeman.points.process.impl.DeliveryPointsWithMapsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedDeliveryPointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedDeliveryPointsWithMapsRefreshProcessingStrategy
@@ -26,8 +28,16 @@ import com.reeman.points.process.impl.FixedQRCodePointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedQRCodePointsWithMapsRefreshProcessingStrategy
 import com.reeman.points.process.impl.QRCodePointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.QRCodePointsWithMapsRefreshProcessingStrategy
+import com.reeman.points.request.RetrofitClient
+import com.reeman.points.request.service.MyApiService
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import timber.log.Timber
 
 class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
 
@@ -215,6 +225,65 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
             checkEnterElevatorPoint = RobotInfo.supportEnterElevatorPoint(),
             pointTypes = listOf(GenericPoint.DELIVERY)
         )
+    }
+
+    // 同步所有点位至小耗牛小程序服务端
+    fun syncAllPointsToApp(context: Context){
+        PointRefreshProcessor(getPointRefreshProcessingStrategy(false),
+            object : RefreshPointDataCallback {
+                override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
+                    Timber.tag("mylog").d("pointList: $pointList")
+                    pushData(pointList, context)
+                }
+
+                override fun onPointsWithMapsLoadSuccess(pointsWithMapList: List<GenericPointsWithMap>) {
+
+                }
+
+                override fun onThrowable(throwable: Throwable) {
+                    Timber.tag("mylog").e(throwable)
+                }
+            }).process(
+            ip = RobotInfo.ROSIPAddress,
+            useLocalData = false,
+            checkEnterElevatorPoint = RobotInfo.supportEnterElevatorPoint(),
+            pointTypes = listOf(GenericPoint.DELIVERY,GenericPoint.CHARGE,GenericPoint.PRODUCT)
+        )
+    }
+
+    private fun pushData(list: List<GenericPoint>, context: Context) {
+        val apiService = RetrofitClient.getInstance(context).create(
+            MyApiService::class.java
+        )
+        // 构造 JSON 数据
+        val positions = Positions(
+            waypoints = list
+        )
+
+        val robotNo = RobotInfo.ROSHostname
+        val positionsJson = Gson().toJson(positions) // 转换为 JSON 字符串
+
+        // 将 String 转换为 RequestBody
+        val robotNoBody = RequestBody.create(MediaType.parse("text/plain"), robotNo)
+        val positionsBody = RequestBody.create(MediaType.parse("application/json"), positionsJson)
+
+
+        // 发送请求
+        apiService.sendRobotData(robotNoBody, positionsBody).enqueue(object :
+            Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    val responseData = response.body()
+                    Timber.tag("mylog").d("API成功: $responseData")
+                } else {
+                    Timber.tag("mylog").e("API错误: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                Timber.tag("mylog").e("请求失败: ${t.message}")
+            }
+        })
     }
 
     override fun startRouteModeTask(

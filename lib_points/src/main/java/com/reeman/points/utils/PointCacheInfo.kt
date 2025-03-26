@@ -396,7 +396,6 @@ object PointCacheInfo {
         val productionPointList = points.filter { genericPointGetter(it) == GenericPoint.PRODUCT }
         val chargePoint = points.find { genericPointGetter(it) == GenericPoint.CHARGE }?.let {
             chargePoint = Pair("", genericPointCreator(it))
-            Timber.tag("mylog").d("充电桩 : $chargePoint")
         }
         if (productionPointList.isEmpty() || chargePoint == null) {
             throw RequiredPointsNotFoundException(
@@ -405,9 +404,7 @@ object PointCacheInfo {
             )
         }
         productionPoints = productionPointList.map { "" to genericPointCreator(it) }
-        Timber.tag("mylog").w("出品点: $productionPoints")
         this.points = points.map { genericPointCreator(it) }.toMutableList()
-        Timber.tag("mylog").w("points: %s", this.points)
         return getPointListByType(types)
     }
 

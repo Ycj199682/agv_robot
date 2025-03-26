@@ -1,10 +1,20 @@
 package com.reeman.points.request;
 
+import android.content.Context;
+
+import com.reeman.points.R;
+
+import java.io.InputStream;
+import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
@@ -16,34 +26,37 @@ public class RetrofitClient {
     private static Retrofit retrofit;
 
     // 获取不安全的 OkHttpClient（绕过 SSL 证书验证，仅用于测试）
-    private static OkHttpClient getUnsafeOkHttpClient() {
+    private static OkHttpClient getUnsafeOkHttpClient(Context context) {
         try {
-            // 创建信任管理器，接受所有证书
-            TrustManager[] trustAllCerts = new TrustManager[]{
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                        }
+            // 加载 Let's Encrypt 证书
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            InputStream certInput = context.getResources().openRawResource(R.raw.isrgrootx1);
+            Certificate ca;
+            try {
+                ca = cf.generateCertificate(certInput);
+            } finally {
+                certInput.close();
+            }
 
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                        }
+            // 创建 KeyStore 并添加证书
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("letsencrypt", ca);
 
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return new X509Certificate[]{};
-                        }
-                    }
-            };
+            // 创建 TrustManager 使用 KeyStore
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keyStore);
 
-            // 初始化 SSL 上下文，并使用上述的信任管理器
+            // 创建 SSLContext 并使用 TrustManager
             SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAllCerts, new SecureRandom());
+            sslContext.init(null, tmf.getTrustManagers(), new java.security.SecureRandom());
 
-            // 创建 OkHttpClient，使用绕过 SSL 校验的配置
             return new OkHttpClient.Builder()
-                    .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0])
-                    .hostnameVerifier((hostname, session) -> true) // 忽略主机名验证
+                    .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) tmf.getTrustManagers()[0])
+                    .hostnameVerifier((hostname, session) -> true)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
                     .build();
 
         } catch (Exception e) {
@@ -51,11 +64,11 @@ public class RetrofitClient {
         }
     }
 
-    public static Retrofit getInstance() {
+    public static Retrofit getInstance(Context context) {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .client(getUnsafeOkHttpClient()) // 测试环境绕过ssl验证
+                    .client(getUnsafeOkHttpClient(context)) // 测试环境绕过ssl验证
                     .addConverterFactory(GsonConverterFactory.create()) // 使用 Gson 解析 JSON
                     .build();
         }

@@ -73,12 +73,6 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Date
 
@@ -522,7 +516,9 @@ class MainActivity : BaseActivity(), MainContract.View, OnFastClickListener,
         ROSController.getCurrentMap()
         ROSController.getRobotType()
         ROSController.positionAutoUploadControl(true)
+        Timber.tag("mylog").d("isFirstEnter: $isFirstEnter")
         if (isFirstEnter) {
+            presenter.syncAllPointsToApp(this)
             ROSController.heartBeat()
             mHandler.postDelayed(chargeRunnable, 10000)
             CallingStateManager.setTimeTickEvent(System.currentTimeMillis())
