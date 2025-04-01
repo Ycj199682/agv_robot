@@ -33,7 +33,7 @@ public class MqttClient {
 
     private final static String TAG = "CallingMqttClient";
 
-    private final String host = "";
+    private final String host;
     private String clientId;
 
     private String hostname;
@@ -75,6 +75,7 @@ public class MqttClient {
     }
 
     public MqttClient() {
+        host = Constants.DEFAULT_MQTT_HOST;
         username = Constants.DEFAULT_MQTT_USERNAME;
         password = Constants.DEFAULT_MQTT_PASSWORD;
     }
@@ -103,20 +104,20 @@ public class MqttClient {
                         EventBus.INSTANCE.sendEvent(MqttConnectionEvent.class, new MqttConnectionEvent(true));
                         isConnecting = false;
                         if (reconnectCount != 0) {
-                            Timber.tag(TAG).w("重新连接成功");
+                            Timber.tag("mylog-mqtt").w("重新连接成功");
                             reconnectCount = 0;
                             return;
                         }
-                        Timber.tag(TAG).w("连接成功");
+                        Timber.tag("mylog-mqtt").w("连接成功");
                         emitter.onNext(0);
                     })
                     .addDisconnectedListener(context -> {
                         EventBus.INSTANCE.sendEvent(MqttConnectionEvent.class, new MqttConnectionEvent(false));
                         isConnecting = true;
-                        Timber.w(context.getCause(), "连接断开");
+                        Timber.tag("mylog-mqtt").w(context.getCause(), "连接断开");
                         if (disconnectManually) return;
                         if (reconnectCount > 3) reconnectCount = 0;
-                        Timber.tag(TAG).w("断开连接,正在重连");
+                        Timber.tag("mylog-mqtt").w("断开连接,正在重连");
                         context.getReconnector()
                                 .reconnect(true)
                                 .delay(++reconnectCount * 2L, TimeUnit.SECONDS);
@@ -148,16 +149,20 @@ public class MqttClient {
                     .topicFilter(topic)
                     .qos(MqttQos.AT_LEAST_ONCE)
                     .applySubscribe()
-                    .doOnSingle(mqtt3SubAck -> emitter.onNext(true))
+                    .doOnSingle(mqtt3SubAck -> {
+                        Timber.tag("mylog-mqtt-sub").v("订阅成功: " + topic);
+                        emitter.onNext(true);
+                    })
                     .subscribe(mqtt5Publish -> {
                         String subscribe = mqtt5Publish.getTopic().toString();
+                        Timber.tag("mylog-mqtt-sub").d(topic + " subscribe: "+subscribe);
                         String payload = new String(mqtt5Publish.getPayloadAsBytes(), StandardCharsets.UTF_8);
-                        Timber.tag("subscribe").v("topic %s , payload %s", subscribe, payload);
+                        Timber.tag("mylog-mqtt-sub").d(topic + " payload: "+payload);
                         if (callback != null) {
                             callback.onMqttPayload(subscribe, payload);
                         }
                     }, throwable -> {
-                        Timber.w(throwable, "mqtt订阅异常");
+                        Timber.tag("mylog-mqtt-sub").w(throwable, "mqtt订阅异常");
                         if (client == null || !WIFIUtils.isNetworkConnected(context))
                             return;
                         emitter.onError(throwable);
@@ -166,13 +171,13 @@ public class MqttClient {
     }
 
     public void unsubscribeTopics() {
-        Timber.d("取消订阅");
+        Timber.tag("mylog-mqtt-sub").d("取消订阅");
         if (client != null && topic != null) {
             try {
                 Mqtt5AsyncClient mqtt5AsyncClient = client.toAsync();
                 mqtt5AsyncClient.unsubscribeWith().topicFilter(topic).send();
             } catch (Exception e) {
-                Timber.w(e, "取消订阅失败");
+                Timber.tag("mylog-mqtt-sub").w(e, "取消订阅失败");
             }
         }
     }
@@ -183,8 +188,9 @@ public class MqttClient {
                 disconnectManually = true;
                 unsubscribeTopics();
                 client.toAsync().disconnect();
+                Timber.tag("mylog-mqtt").d("断开连接");
             } catch (Exception e) {
-                Timber.w(e, "断开连接失败");
+                Timber.tag("mylog-mqtt-sub").w(e, "断开连接失败");
             }
             isConnecting = false;
             client = null;

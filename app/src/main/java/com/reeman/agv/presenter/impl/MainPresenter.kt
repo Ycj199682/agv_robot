@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.reeman.agv.R
 import com.reeman.agv.activities.TaskExecutingActivity
 import com.reeman.agv.contract.MainContract
+import com.reeman.agv.request.ServiceFactory
 import com.reeman.agv.widgets.EasyDialog
 import com.reeman.commons.constants.Constants
 import com.reeman.commons.exceptions.ElevatorNetworkNotSettException
@@ -28,7 +29,7 @@ import com.reeman.points.process.impl.FixedQRCodePointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedQRCodePointsWithMapsRefreshProcessingStrategy
 import com.reeman.points.process.impl.QRCodePointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.QRCodePointsWithMapsRefreshProcessingStrategy
-import com.reeman.points.request.RetrofitClient
+import com.reeman.points.request.MyRetrofitClient
 import com.reeman.points.request.service.MyApiService
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -232,7 +233,7 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
         PointRefreshProcessor(getPointRefreshProcessingStrategy(false),
             object : RefreshPointDataCallback {
                 override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
-                    Timber.tag("mylog").d("pointList: $pointList")
+                    Timber.tag("syncAllPointsToApp").d("pointList: $pointList")
                     pushData(pointList, context)
                 }
 
@@ -241,7 +242,7 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
                 }
 
                 override fun onThrowable(throwable: Throwable) {
-                    Timber.tag("mylog").e(throwable)
+                    Timber.tag("syncAllPointsToApp").e(throwable)
                 }
             }).process(
             ip = RobotInfo.ROSIPAddress,
@@ -252,9 +253,6 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
     }
 
     private fun pushData(list: List<GenericPoint>, context: Context) {
-        val apiService = RetrofitClient.getInstance(context).create(
-            MyApiService::class.java
-        )
         // 构造 JSON 数据
         val positions = Positions(
             waypoints = list
@@ -269,14 +267,14 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
 
 
         // 发送请求
-        apiService.sendRobotData(robotNoBody, positionsBody).enqueue(object :
+        ServiceFactory.getApiService(context).sendRobotData(robotNoBody, positionsBody).enqueue(object :
             Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
                     val responseData = response.body()
-                    Timber.tag("mylog").d("API成功: $responseData")
+                    Timber.tag("mylog-pushdata").d("推送点位成功: $responseData")
                 } else {
-                    Timber.tag("mylog").e("API错误: ${response.errorBody()?.string()}")
+                    Timber.tag("mylog-pushdata").e("推送点位错误: ${response.errorBody()?.string()}")
                 }
             }
 

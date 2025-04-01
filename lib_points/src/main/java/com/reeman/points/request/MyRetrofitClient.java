@@ -6,14 +6,11 @@ import com.reeman.points.R;
 
 import java.io.InputStream;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
@@ -21,8 +18,8 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class RetrofitClient {
-    private static final String BASE_URL = "https://robot.ssmvv.com/"; // 外网地址
+public class MyRetrofitClient {
+    private static final String BASE_URL = "https://robot.ssmvv.com/"; // 外网地址 沈工测试地址
     private static Retrofit retrofit;
 
     // 获取不安全的 OkHttpClient（绕过 SSL 证书验证，仅用于测试）
@@ -68,7 +65,7 @@ public class RetrofitClient {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .client(getUnsafeOkHttpClient(context)) // 测试环境绕过ssl验证
+                    .client(getUnsafeOkHttpClient(context))
                     .addConverterFactory(GsonConverterFactory.create()) // 使用 Gson 解析 JSON
                     .build();
         }
