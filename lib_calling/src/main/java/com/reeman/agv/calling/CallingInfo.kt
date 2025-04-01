@@ -111,12 +111,12 @@ object CallingInfo {
      * 刷新并返回未超时的token
      */
     fun refreshTokenList(): ArrayList<Pair<String, Long>> {
-        val currentTimeMillis = System.currentTimeMillis()
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-            tokenList.removeIf { currentTimeMillis - it.second > 10_000 }
-        } else {
-            tokenList.removeAll { currentTimeMillis - it.second > 10_000 }
-        }
+//        val currentTimeMillis = System.currentTimeMillis()
+//        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+//            tokenList.removeIf { currentTimeMillis - it.second > 10_000 }
+//        } else {
+//            tokenList.removeAll { currentTimeMillis - it.second > 10_000 }
+//        }
         return tokenList
     }
 
