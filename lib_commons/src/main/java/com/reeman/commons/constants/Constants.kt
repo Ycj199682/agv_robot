@@ -110,9 +110,11 @@ object Constants {
 
     const val DEFAULT_SUBSCRIPTION_KEY = ""
 
-    const val DEFAULT_MQTT_USERNAME = ""
+    const val DEFAULT_MQTT_HOST  = "206.119.179.56"
 
-    const val DEFAULT_MQTT_PASSWORD = ""
+    const val DEFAULT_MQTT_USERNAME = "mqtt_ssmvv"
+
+    const val DEFAULT_MQTT_PASSWORD = "OIBHo123_d3vv"
     //上次自检时间
     const val KEY_LAST_REBOOT_TIME = "KEY_LAST_REBOOT_TIME"
     //别名
