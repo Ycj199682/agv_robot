@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_main"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingEnd="@dimen/dp30"
+    android:paddingStart="@dimen/dp30"
+    tools:context=".activities.UserMainActivity">
+
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="欢迎使用"
+        android:textColor="@color/white"
+        android:textSize="60dp"
+        android:gravity="center"/>
+
+</LinearLayout>
