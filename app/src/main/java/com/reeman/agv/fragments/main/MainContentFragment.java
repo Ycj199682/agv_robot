@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 
 import com.reeman.agv.R;
 import com.reeman.agv.activities.SettingActivity;
+import com.reeman.agv.activities.UserMainActivity;
 import com.reeman.agv.activities.WiFiConnectActivity;
 import com.reeman.agv.base.BaseFragment;
 import com.reeman.commons.constants.Constants;
@@ -41,6 +42,10 @@ public class MainContentFragment extends BaseFragment implements EasyDialog.OnVi
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        findView(R.id.changeUser).setOnClickListener((v)->{
+            Intent intent = new Intent(getContext(), UserMainActivity.class);
+            startActivity(intent);
+        });
         findView(R.id.btn_mode_normal).setOnClickListener(this);
         findView(R.id.btn_mode_route).setOnClickListener(this);
         findView(R.id.btn_mode_qrcode).setOnClickListener(this);

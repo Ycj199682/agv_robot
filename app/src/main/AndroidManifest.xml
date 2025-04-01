@@ -91,7 +91,8 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-
+        <activity
+            android:name=".activities.UserMainActivity" />
         <service android:name=".calling.service.CallingService" />
         <service android:name=".service.RobotService" />
         <provider
