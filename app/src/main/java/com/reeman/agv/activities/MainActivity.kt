@@ -518,7 +518,6 @@ class MainActivity : BaseActivity(), MainContract.View, OnFastClickListener,
         ROSController.positionAutoUploadControl(true)
         Timber.tag("mylog").d("isFirstEnter: $isFirstEnter")
         if (isFirstEnter) {
-            presenter.syncAllPointsToApp(this)
             ROSController.heartBeat()
             mHandler.postDelayed(chargeRunnable, 10000)
             CallingStateManager.setTimeTickEvent(System.currentTimeMillis())

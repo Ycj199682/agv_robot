@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import com.reeman.commons.utils.SpManager
 import com.reeman.points.exception.PointListEmptyException
 import com.reeman.points.model.custom.GenericPoint
+import com.reeman.points.model.custom.GenericPointsWithMap
 import com.reeman.points.process.PointRefreshProcessingStrategy
 import com.reeman.points.process.callback.RefreshPointDataCallback
 import com.reeman.points.utils.PointCacheConstants
@@ -99,9 +100,6 @@ class DeliveryPointsRefreshProcessingStrategy : PointRefreshProcessingStrategy {
         }
         throw PointListEmptyException(code)
     }
-    data class Positions(
-        val waypoints: List<GenericPoint>
-    )
 
 
 }

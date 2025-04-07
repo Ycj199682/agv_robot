@@ -14,14 +14,15 @@ import com.reeman.commons.exceptions.ElevatorNetworkNotSettException
 import com.reeman.commons.state.NavigationMode
 import com.reeman.commons.state.RobotInfo
 import com.reeman.commons.state.TaskMode
+import com.reeman.commons.utils.AESUtil
 import com.reeman.dao.repository.entities.RouteWithPoints
+import com.reeman.points.exception.MapListEmptyException
 import com.reeman.points.model.custom.GenericPoint
 import com.reeman.points.model.custom.GenericPointsWithMap
 import com.reeman.points.model.request.ApiResponse
 import com.reeman.points.process.PointRefreshProcessor
 import com.reeman.points.process.callback.RefreshPointDataCallback
 import com.reeman.points.process.impl.DeliveryPointsRefreshProcessingStrategy
-import com.reeman.points.process.impl.DeliveryPointsRefreshProcessingStrategy.Positions
 import com.reeman.points.process.impl.DeliveryPointsWithMapsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedDeliveryPointsRefreshProcessingStrategy
 import com.reeman.points.process.impl.FixedDeliveryPointsWithMapsRefreshProcessingStrategy
@@ -214,6 +215,8 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
                 }
 
                 override fun onPointsWithMapsLoadSuccess(pointsWithMapList: List<GenericPointsWithMap>) {
+                    Timber.tag("mylog").d("pointsWithMapList: $pointsWithMapList")
+                    pushData(pointsWithMapList,context)
                     view.onNormalModeMapsWithPointsDataLoadSuccess(pointsWithMapList)
                 }
 
@@ -229,33 +232,13 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
     }
 
     // 同步所有点位至小耗牛小程序服务端
-    fun syncAllPointsToApp(context: Context){
-        PointRefreshProcessor(getPointRefreshProcessingStrategy(false),
-            object : RefreshPointDataCallback {
-                override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
-                    Timber.tag("syncAllPointsToApp").d("pointList: $pointList")
-                    pushData(pointList, context)
-                }
+    private fun pushData(list: List<GenericPointsWithMap>, context: Context) {
+        val listJson = Gson().toJson(list)
+        val secret = AESUtil.encrypt(listJson)
 
-                override fun onPointsWithMapsLoadSuccess(pointsWithMapList: List<GenericPointsWithMap>) {
-
-                }
-
-                override fun onThrowable(throwable: Throwable) {
-                    Timber.tag("syncAllPointsToApp").e(throwable)
-                }
-            }).process(
-            ip = RobotInfo.ROSIPAddress,
-            useLocalData = false,
-            checkEnterElevatorPoint = RobotInfo.supportEnterElevatorPoint(),
-            pointTypes = listOf(GenericPoint.DELIVERY,GenericPoint.CHARGE,GenericPoint.PRODUCT)
-        )
-    }
-
-    private fun pushData(list: List<GenericPoint>, context: Context) {
         // 构造 JSON 数据
         val positions = Positions(
-            waypoints = list
+            waypoints = secret
         )
 
         val robotNo = RobotInfo.ROSHostname
@@ -272,9 +255,9 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
                     val responseData = response.body()
-                    Timber.tag("mylog-pushdata").d("推送点位成功: $responseData")
+                    Timber.tag("mylog-pushdata").d("推送点位响应成功: $responseData")
                 } else {
-                    Timber.tag("mylog-pushdata").e("推送点位错误: ${response.errorBody()?.string()}")
+                    Timber.tag("mylog-pushdata").e("推送点位响应失败: ${response.errorBody()?.string()}")
                 }
             }
 
@@ -330,4 +313,8 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
         }
         activity.startActivityForResult(intent, Constants.RESULT_CODE_OF_TASK)
     }
+
+    data class Positions(
+        val waypoints: String
+    )
 }
