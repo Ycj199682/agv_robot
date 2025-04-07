@@ -29,7 +29,7 @@ class TaskModeNormal(private val gson: Gson) : Task {
             token = intent.getStringExtra(Constants.TASK_TOKEN)
         }
         pointList = Json.decodeFromString(taskTarget!!)
-        Timber.w("普通模式配送配置 : ${RobotInfo.modeNormalSetting} \n 点位信息 : $taskTarget\n返航配置 : ${RobotInfo.returningSetting}")
+        Timber.tag("mylog-task-init").w("普通模式配送配置 : ${RobotInfo.modeNormalSetting} \n 点位信息 : $taskTarget\n返航配置 : ${RobotInfo.returningSetting}")
         val currentTimeMillis = System.currentTimeMillis()
         CallingInfo.heartBeatInfo.currentTask = TaskInfo(
             currentTimeMillis,

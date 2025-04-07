@@ -31,22 +31,23 @@ class DeliveryPointsRefreshProcessingStrategy : PointRefreshProcessingStrategy {
                 val isROSData = it.first
                 val pointsMap = it.second
                 if (pointsMap.isEmpty() || !pointsMap.containsKey("waypoints")) {
-                    Timber.d("数据为空")
+                    Timber.tag("mylog-ex").d("数据为空")
                     throwNoPointException(isROSData)
                 }
                 if (isROSData) {
-                    Timber.d("更新本地数据")
+                    Timber.tag("mylog-ex").d("更新本地数据")
                     PointCacheUtil.savePoints(pointsMap)
                 }
                 val pointList = pointsMap["waypoints"]
                 if (pointList.isNullOrEmpty()) {
-                    Timber.d("数据为空")
+                    Timber.tag("mylog-ex").d("数据为空")
                     throwNoPointException(isROSData)
                 }
                 val deliveryPointList = PointCacheInfo.checkPoints(pointList!!, pointTypes)
                 if (deliveryPointList.isEmpty()) {
                     var code = PointListEmptyException.LOCAL_NO_TARGET_TYPE_POINTS
                     if (isROSData) code = PointListEmptyException.ROS_NO_TARGET_TYPE_POINTS
+                    Timber.tag("mylog-ex").d("code:"+code)
                     throw PointListEmptyException(code)
                 }
 

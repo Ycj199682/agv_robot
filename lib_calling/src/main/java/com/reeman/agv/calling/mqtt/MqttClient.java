@@ -155,9 +155,8 @@ public class MqttClient {
                     })
                     .subscribe(mqtt5Publish -> {
                         String subscribe = mqtt5Publish.getTopic().toString();
-                        Timber.tag("mylog-mqtt-sub").d(topic + " subscribe: "+subscribe);
                         String payload = new String(mqtt5Publish.getPayloadAsBytes(), StandardCharsets.UTF_8);
-                        Timber.tag("mylog-mqtt-sub").d(topic + " payload: "+payload);
+                        Timber.tag("mylog-mqtt-sub").d("subscribe: "+subscribe + " payload: " + payload);
                         if (callback != null) {
                             callback.onMqttPayload(subscribe, payload);
                         }

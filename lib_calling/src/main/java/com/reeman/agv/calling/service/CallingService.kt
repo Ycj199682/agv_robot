@@ -157,13 +157,13 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                         Topic.topicRobotHeartBeat(heartBeatInfo.hostname),
                         gson.toJson(heartBeatInfo)
                     )
-                    Timber.d("心跳发送成功 : $heartBeatInfo")
+                    Timber.tag("heartbeat").d("心跳发送成功")
                 } catch (e: Exception) {
-                    Timber.d(e, "心跳发送失败 : $heartBeatInfo")
+                    Timber.tag("heartbeat").d(e, "心跳发送失败")
                 }
             }
         } catch (e: Exception) {
-            Timber.w(e, "心跳异常")
+            Timber.tag("heartbeat").w(e, "心跳异常")
         }
     }
 
@@ -486,14 +486,16 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
     }
 
 
+    // mqtt接受任务
     override fun onMqttPayload(topic: String, payload: String) {
         if (topic.isBlank() || payload.isBlank()) {
-            Timber.w("消息异常")
+            Timber.tag("mylog-mqtt-payload").w("消息异常")
             return
         }
         val hostname = RobotInfo.ROSHostname
         val callingModeSetting = CallingInfo.callingModeSetting
         val key = callingModeSetting.key
+        Timber.tag("mylog-mqtt-payload").w("callingModeSetting:${callingModeSetting}")
         when {
             topic == Topic.topicPhoneHeartBeat(hostname) -> {
                 val baseModel = gson.fromJson(payload, BaseModel::class.java)
@@ -528,7 +530,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                             StartTaskCode.TOKEN_EXCEPTION
                         )
                     )
-                    Timber.w("token非法")
+                    Timber.tag("mylog-mqtt-payload").w("token非法")
                     return
                 }
                 if (!CallingInfo.isDeviceAlive(baseModel.token)) {
@@ -540,7 +542,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                             StartTaskCode.DEVICE_OFFLINE
                         )
                     )
-                    Timber.w("设备不在线")
+                    Timber.tag("mylog-mqtt-payload").w("设备不在线")
                     return
                 }
                 when (taskMode) {
@@ -586,6 +588,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
 
                         else -> null
                     } ?: return
+                    Timber.tag("mylog-mqtt-payload").d("taskmode: $taskMode")
                     if (!key.second.contains(baseTaskModel.token)) {
                         detailException(
                             START_TASK_FAILED, taskMode,
@@ -594,7 +597,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                 StartTaskCode.TOKEN_EXCEPTION
                             )
                         )
-                        Timber.w("token非法")
+                        Timber.tag("mylog-mqtt-payload").w("token非法")
                         return
                     }
                     if (!CallingInfo.isDeviceAlive(baseTaskModel.token)) {
@@ -606,7 +609,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                 StartTaskCode.DEVICE_OFFLINE
                             )
                         )
-                        Timber.w("设备不在线")
+                        Timber.tag("mylog-mqtt-payload").w("设备不在线")
                         return
                     }
                     when (taskMode) {
@@ -624,7 +627,9 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
 
                         else -> {
                             baseTaskModel.body?.let { body ->
+                                Timber.tag("mylog-mqtt-payload").d("key: ${key.first} body: $body")
                                 val bodyDecrypt = AESUtil.decrypt(key.first, body)
+                                Timber.tag("mylog-mqtt-payload").d("bodyDecrypt: $bodyDecrypt")
                                 if (bodyDecrypt == body) {
                                     detailException(
                                         START_TASK_FAILED,
@@ -634,7 +639,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                             StartTaskCode.DECRYPT_FAILED
                                         )
                                     )
-                                    Timber.w("解密失败,key: ${key.first},data: $body")
+                                    Timber.tag("mylog-mqtt-payload").w("解密失败,key: ${key.first},data: $body")
                                     return
                                 }
                                 when (taskMode) {
@@ -645,6 +650,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                     bodyDecrypt,
                                                     TaskPointModel::class.java
                                                 )
+                                            Timber.tag("mylog-mqtt-payload").d("taskPointModelV2: $taskPointModel")
                                             addTask {
                                                 checkCallingTaskPoints(
                                                     CallingModeTaskModel(
@@ -663,7 +669,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                     StartTaskCode.JSON_SYNTAX_EXCEPTION
                                                 )
                                             )
-                                            Timber.w(e, "$bodyDecrypt 转TaskPointModel失败")
+                                            Timber.tag("mylog-mqtt-payload").w(e, "$bodyDecrypt 转TaskPointModel失败")
                                         }
 
                                     }
@@ -676,6 +682,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                     object :
                                                         TypeToken<List<TaskPointModel>>() {}.type
                                                 )
+                                            Timber.tag("mylog-mqtt-payload").d("taskPointModelV2List: $taskPointModelV2List")
                                             addTask {
                                                 checkNormalTaskPoints(
                                                     baseTaskModel.token!!,
@@ -716,7 +723,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                     }
 
                                     else -> {
-                                        Timber.w("unknown topic: $topic")
+                                        Timber.tag("mylog-mqtt-payload").w("unknown topic: $topic")
                                     }
                                 }
                             }
@@ -724,7 +731,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                     }
 
                 } catch (e: JsonParseException) {
-                    Timber.w(e, "json解析异常")
+                    Timber.tag("mylog-mqtt-payload").w(e, "json解析异常")
                 }
             }
         }
@@ -962,7 +969,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
     }
 
     private fun checkNormalTaskPoints(token: String, taskPointModelList: List<TaskPointModel>) {
-        Timber.w("收到普通任务 token : $token, taskPointModelList: $taskPointModelList")
+        Timber.tag("mylog-mqtt-task").w("收到普通任务 token : $token, taskPointModelList: $taskPointModelList")
         PointRefreshProcessor(getPointRefreshProcessingStrategy(),
             object : RefreshPointDataCallback {
                 override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
@@ -1013,7 +1020,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
     }
 
     private fun checkCallingTaskPoints(callingModeTaskModel: CallingModeTaskModel) {
-        Timber.d("收到呼叫任务 $callingModeTaskModel")
+        Timber.tag("mylog-mqtt-payload").d("收到呼叫任务 $callingModeTaskModel")
         val taskPointModel = callingModeTaskModel.taskPointModel
         if (taskPointModel.point.isBlank()) {
             detailException(
@@ -1378,14 +1385,14 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         val topic = Topic.topicStartTaskResponse(RobotInfo.ROSHostname)
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
-                Timber.d(
+                Timber.tag("mylog-mqtt-task").d(
                     "开始任务响应成功,topic : %s,payload : %s ",
                     topic,
                     payload
                 )
             }
             ) { throwable ->
-                Timber.w(
+                Timber.tag("mylog-mqtt-task").w(
                     throwable,
                     "响应失败,topic : %s,payload : %s ",
                     topic,
@@ -1437,14 +1444,14 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         val payload = gson.toJson(ResponseModel(token, body, code))
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
-                Timber.d(
+                Timber.tag("mylog-call").d(
                     "响应成功,topic : %s,payload : %s ",
                     topic,
                     payload
                 )
             }
             ) { throwable ->
-                Timber.w(
+                Timber.tag("mylog-call").w(
                     throwable,
                     "响应失败,topic : %s,payload : %s ",
                     topic,

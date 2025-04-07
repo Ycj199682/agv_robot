@@ -158,6 +158,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
     @Override
     public void startTask(Context context, Intent intent) {
         TaskMode taskMode = robotInfo.getMode();
+        Timber.tag("mylog-task-start-"+taskMode).d("gson:" + gson);
         task = TaskFactory.create(taskMode, gson);
         task.initTask(intent);
         if (robotInfo.isDoorControlMode()) {
@@ -1465,9 +1466,9 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
 
     private void detailNavigationSuccessResult(String name) {
         pauseBackgroundMusic();
-        Timber.w("到达 :%s", name);
+        Timber.tag("mylog-task").w("到达 :%s", name);
         if (currentAction != null) {
-            Timber.w("currentAction : %s", currentAction);
+            Timber.tag("mylog-task").w("currentAction : %s", currentAction);
             String action = currentAction.getFirst();
             PointModel pointModel = currentAction.getSecond();
             if (action.startsWith("door_")) {//门控
@@ -1504,7 +1505,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                 }
             } else if (action.equals(TaskAction.leave_elevator_to_enter_elevator_point)) {//出梯时到达进梯点
                 if (isTimeout) {
-                    Timber.w("出梯已超时");
+                    Timber.tag("mylog-task").w("出梯已超时");
                     return;
                 }
                 mHandler.removeCallbacks(leaveElevatorTimeoutRunnable);
@@ -1522,7 +1523,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                 currentAction = null;
                 if (action.equals(TaskAction.enter_elevator)) {
                     if (isTimeout) {
-                        Timber.w("前往进梯点已超时");
+                        Timber.tag("mylog-task").w("前往进梯点已超时");
                         return;
                     }
                     mHandler.removeCallbacks(navigationToEnterElevatorPointTimeOutRunnable);
@@ -1556,7 +1557,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                     }
                 } else if (action.equals(TaskAction.inside_elevator)) {
                     if (isTimeout) {
-                        Timber.w("进梯已超时");
+                        Timber.tag("mylog-task").w("进梯已超时");
                         return;
                     }
                     mHandler.removeCallbacks(enterElevatorTimeoutRunnable);
@@ -1565,7 +1566,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                     view.updateTakeElevatorStep(Step.ENTER_ELEVATOR_COMPLETE, task.getNextPointWithElevator().getFirst());
                 } else {
                     if (isTimeout) {
-                        Timber.w("出梯已超时");
+                        Timber.tag("mylog-task").w("出梯已超时");
                         return;
                     }
                     mHandler.removeCallbacks(leaveElevatorTimeoutRunnable);
@@ -1593,7 +1594,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                 task.arrivedPoint(name);
                 if (action.equals(TaskAction.delivery_point)) {
                     //普通模式设置任务完成不返回出品点且关闭倒计时
-                    Timber.w("isArrivedLastPointAndStay : %s , countDownTime : %s", task.isArrivedLastPointAndEndInPlace(), countDownTime);
+                    Timber.tag("mylog-task").w("isArrivedLastPointAndStay : %s , countDownTime : %s", task.isArrivedLastPointAndEndInPlace(), countDownTime);
                     if (task.isArrivedLastPointAndEndInPlace() && countDownTime == 0) {
                         playVoiceTip("voice_arrived_target_point", () -> {
                             if (robotInfo.getState() == State.PAUSE || robotInfo.getState() == State.IDLE)
