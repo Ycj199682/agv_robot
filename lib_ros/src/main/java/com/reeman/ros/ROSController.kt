@@ -216,7 +216,7 @@ object ROSController : RosCallbackParser.RosCallback {
         if (rosCallbackList.isNotEmpty()) {
             synchronized(rosCallbackList) {
                 if (rosCallbackList.isNotEmpty()) {
-                    Log.v(this::class.simpleName, "eventDispatch : $rosCallbackList")
+//                    Log.v(this::class.simpleName, "eventDispatch : $rosCallbackList")
                     when (rosEvent) {
                         is ApplyMapEvent -> rosCallbackList.forEach { it.onApplyMapEvent(rosEvent) }
                         is BaseVelEvent -> rosCallbackList.forEach { it.onBaseVelEvent(rosEvent) }
@@ -410,7 +410,9 @@ object ROSController : RosCallbackParser.RosCallback {
 
             result.startsWith("power_on_t:") -> eventQueue.add(PowerOnTimeEvent(result))
 
-            else -> Log.v("rosController", "unused message: $result")
+            else -> {
+//                Log.v("rosController", "unused message: $result")
+            }
         }
 
     }

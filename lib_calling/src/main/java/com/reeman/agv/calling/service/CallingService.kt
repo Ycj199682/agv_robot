@@ -42,6 +42,7 @@ import com.reeman.agv.calling.model.QRCodeModeTaskModel
 import com.reeman.agv.calling.model.ResponseModel
 import com.reeman.agv.calling.model.TaskDetails
 import com.reeman.agv.calling.model.TaskPointModel
+import com.reeman.agv.calling.model.TaskPointModelV2
 import com.reeman.agv.calling.mqtt.MqttClient
 import com.reeman.agv.calling.mqtt.Topic
 import com.reeman.agv.calling.utils.Code
@@ -648,7 +649,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                             val taskPointModel =
                                                 gson.fromJson(
                                                     bodyDecrypt,
-                                                    TaskPointModel::class.java
+                                                    TaskPointModelV2::class.java
                                                 )
                                             Timber.tag("mylog-mqtt-payload").d("taskPointModelV2: $taskPointModel")
                                             addTask {
@@ -676,17 +677,17 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
 
                                     TaskMode.MODE_NORMAL -> {
                                         try {
-                                            val taskPointModelList =
-                                                gson.fromJson<List<TaskPointModel>>(
+                                            val taskPointModelV2List =
+                                                gson.fromJson<List<TaskPointModelV2>>(
                                                     bodyDecrypt,
                                                     object :
-                                                        TypeToken<List<TaskPointModel>>() {}.type
+                                                        TypeToken<List<TaskPointModelV2>>() {}.type
                                                 )
                                             Timber.tag("mylog-mqtt-payload").d("taskPointModelV2List: $taskPointModelV2List")
                                             addTask {
                                                 checkNormalTaskPoints(
                                                     baseTaskModel.token!!,
-                                                    taskPointModelList
+                                                    taskPointModelV2List
                                                 )
                                             }
                                         } catch (e: JsonParseException) {
@@ -698,7 +699,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                     StartTaskCode.JSON_SYNTAX_EXCEPTION
                                                 )
                                             )
-                                            Timber.w(e, "$bodyDecrypt 转List<TaskPointModel>失败")
+                                            Timber.tag("mylog-mqtt-payload").w(e, "$bodyDecrypt 转List<TaskPointModelV2>失败")
                                         }
                                     }
 

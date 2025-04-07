@@ -22,6 +22,7 @@ import com.reeman.agv.calling.event.NormalTaskEvent;
 import com.reeman.agv.calling.event.QRCodeTaskEvent;
 import com.reeman.agv.calling.event.ReturnTaskEvent;
 import com.reeman.agv.calling.event.RouteTaskEvent;
+import com.reeman.agv.fragments.task.ArrivedFragment2;
 import com.reeman.commons.constants.Constants;
 import com.reeman.commons.event.AGVDockResultEvent;
 import com.reeman.commons.event.ApplyMapEvent;
@@ -361,6 +362,17 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         Timber.w("arrive target point :\n %s", model.toString());
     }
 
+    private void switchArrivedToShowPayFragment(TaskArrivedInfoModel model) {
+        layoutHeader.setVisibility(View.VISIBLE);
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.KEY_TASK_ARRIVED_INFO, new Gson().toJson(model));
+        ArrivedFragment2 arrivedFragment = new ArrivedFragment2(onArrivedBtnListener2);
+        arrivedFragment.setArguments(bundle);
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.alpha_in, R.anim.alpha_out).replace(R.id.task_fragment_view, arrivedFragment).commit();
+        Timber.w("arrive target point :\n %s", model.toString());
+    }
+
+
     private final RunningFragment.OnRunningClickListener onRunningClickListener = new RunningFragment.OnRunningClickListener() {
         @Override
         public void onClick() {
@@ -395,6 +407,13 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
             presenter.onCancelClick();
         }
     };
+
+    private final ArrivedFragment2.OnArrivedBtnListener onArrivedBtnListener2 = new ArrivedFragment2.OnArrivedBtnListener() {
+        @Override
+        public void onReturnBtnClick() {
+        }
+    };
+
 
     private final PauseFragment.OnPauseClickListener onPauseClickListener = new PauseFragment.OnPauseClickListener() {
         @Override
@@ -478,10 +497,11 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .setShowLiftDownButton(showLiftDownBtn)
                     .setShowGotoNextPointButton(hasNextPoint)
                     .setShowCancelTaskButton(true)
-                    .setCountDownTime(0)
+                    .setCountDownTime(30)
                     .setIsReturnToChargePoint(isReturnToChargePoint)
                     .build();
-            switchArrivedFragment(model);
+//            switchArrivedFragment(model);
+            switchArrivedToShowPayFragment(model);
         }
     }
 
