@@ -13,6 +13,7 @@ import timber.log.Timber;
 
 public class AESUtil {
 
+    private static final String XIAOHAONIU_KEY = "OIASBdo1230u9";
 
     public static byte[] encrypt(String key,byte[] origData) throws GeneralSecurityException {
         byte[] keyBytes = getKeyBytes(key);
@@ -27,6 +28,12 @@ public class AESUtil {
     private static byte[] getKeyBytes(String key) {
         byte[] bytes = key.getBytes();
         return bytes.length == 16 ? bytes : Arrays.copyOf(bytes, 16);
+    }
+
+    public static String encrypt(String val) throws GeneralSecurityException {
+        byte[] origData = val.getBytes();
+        byte[] crypted = encrypt(XIAOHAONIU_KEY,origData);
+        return Base64.encodeToString(crypted,Base64.NO_WRAP);
     }
 
     public static String encrypt(String key, String val) throws GeneralSecurityException {
