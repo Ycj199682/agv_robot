@@ -7,6 +7,13 @@ class ResponseModel: BaseTaskModel {
     @SerializedName("code")
     var code = 0
 
+    var order = ""
+
+    constructor(token: String?, body: String?, code: Int, order: String) : super(token, body) {
+        this.code = code
+        this.order = order
+    }
+
     constructor(token: String?, body: String?, code: Int) : super(token, body) {
         this.code = code
     }

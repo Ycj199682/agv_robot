@@ -684,6 +684,13 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                         TypeToken<List<TaskPointModelV2>>() {}.type
                                                 )
                                             Timber.tag("mylog-mqtt-payload").d("taskPointModelV2List: $taskPointModelV2List")
+                                            if(taskPointModelV2List != null) {
+                                                for (taskPointModelV2 in taskPointModelV2List) {
+                                                    RobotInfo.orderNo = taskPointModelV2.orderNo
+                                                    RobotInfo.payAccount = taskPointModelV2.payAccount
+                                                    break
+                                                }
+                                            }
                                             addTask {
                                                 checkNormalTaskPoints(
                                                     baseTaskModel.token!!,
@@ -1442,7 +1449,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
             topic = Topic.topicStartTaskResponse(hostname)
         }
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, code))
+        val payload = gson.toJson(ResponseModel(token, body, code, RobotInfo.orderNo))
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
                 Timber.tag("mylog-call").d(

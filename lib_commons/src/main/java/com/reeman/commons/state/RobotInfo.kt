@@ -295,4 +295,7 @@ object RobotInfo {
 
     var lastSynchronizedTimestamp = 0L
 
+    var orderNo = "" //小耗牛小程序订单号
+    var payAccount = ""  //小耗牛小程序-用户输入的收款账号
+
 }
