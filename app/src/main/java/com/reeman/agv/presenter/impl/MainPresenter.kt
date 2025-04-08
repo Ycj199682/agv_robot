@@ -250,7 +250,7 @@ class MainPresenter(val view: MainContract.View) : MainContract.Presenter {
 
 
         // 发送请求
-        ServiceFactory.getApiService(context).sendRobotData(robotNoBody, positionsBody).enqueue(object :
+        ServiceFactory.getApiService(context).reportPosition(robotNoBody, positionsBody).enqueue(object :
             Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {

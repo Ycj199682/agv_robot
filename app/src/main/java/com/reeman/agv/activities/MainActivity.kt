@@ -2,6 +2,7 @@ package com.reeman.agv.activities
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.net.NetworkInfo
 import android.net.wifi.WifiManager
 import android.view.KeyEvent
@@ -14,6 +15,7 @@ import com.reeman.agv.BuildConfig
 import com.reeman.agv.R
 import com.reeman.agv.base.BaseActivity
 import com.reeman.agv.base.BaseApplication.mApp
+import com.reeman.agv.calling.CallingInfo
 import com.reeman.agv.calling.button.CallingHelper.isStart
 import com.reeman.agv.calling.button.CallingHelper.start
 import com.reeman.agv.calling.event.MqttConnectionEvent
@@ -36,6 +38,7 @@ import com.reeman.agv.fragments.main.ModeRoutePointEditFragment
 import com.reeman.agv.fragments.main.listener.ModeQRCodeClickListener
 import com.reeman.agv.fragments.main.listener.OnGreenButtonClickListener
 import com.reeman.agv.presenter.impl.MainPresenter
+import com.reeman.agv.request.ServiceFactory
 import com.reeman.agv.request.notifier.Notifier
 import com.reeman.agv.request.notifier.NotifyConstant
 import com.reeman.agv.utils.DebounceClickListener
@@ -58,6 +61,7 @@ import com.reeman.commons.eventbus.EventBus
 import com.reeman.commons.model.request.Msg
 import com.reeman.commons.state.RobotInfo
 import com.reeman.commons.state.TaskMode
+import com.reeman.commons.utils.AESUtil
 import com.reeman.commons.utils.ClickHelper
 import com.reeman.commons.utils.ClickHelper.OnFastClickListener
 import com.reeman.commons.utils.SpManager
@@ -68,11 +72,18 @@ import com.reeman.dao.repository.entities.CrashNotify
 import com.reeman.dao.repository.entities.RouteWithPoints
 import com.reeman.points.model.custom.GenericPoint
 import com.reeman.points.model.custom.GenericPointsWithMap
+import com.reeman.points.model.request.ApiResponse
 import com.reeman.ros.ROSController
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import timber.log.Timber
 import java.util.Date
 
@@ -521,6 +532,7 @@ class MainActivity : BaseActivity(), MainContract.View, OnFastClickListener,
             ROSController.heartBeat()
             mHandler.postDelayed(chargeRunnable, 10000)
             CallingStateManager.setTimeTickEvent(System.currentTimeMillis())
+            syncRobotInfo(this)
         }
         if (!isStart()) {
             try {
@@ -577,6 +589,38 @@ class MainActivity : BaseActivity(), MainContract.View, OnFastClickListener,
 //            Timber.w("click4")
 //            tvHostname.performClick()
 //        }
+    }
+
+    private fun syncRobotInfo(context: Context){
+        val robotData = JSONObject().apply {
+            put("robot_no", RobotInfo.ROSHostname)
+            put("robot_name", RobotInfo.robotAlias)
+            put("token", CallingInfo.callingModeSetting.key.first)
+        }
+        Timber.tag("mylog").d("robotData:$robotData")
+        val secret = AESUtil.encrypt(robotData.toString())
+        Timber.tag("mylog").d("secret:$secret")
+
+
+        // 将 String 转换为 RequestBody
+        val positionsBody = RequestBody.create(MediaType.parse("text/plain"), secret)
+
+        // 发送请求
+        ServiceFactory.getApiService(context).reportRobot(positionsBody).enqueue(object :
+            Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    val responseData = response.body()
+                    Timber.tag("mylog-pushdata").d("更新机器人信息成功: $responseData")
+                } else {
+                    Timber.tag("mylog-pushdata").e("更新机器人信息失败: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                Timber.tag("mylog").e("请求失败: ${t.message}")
+            }
+        })
     }
 
     private fun registerObservers() {

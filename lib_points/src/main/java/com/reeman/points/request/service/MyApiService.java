@@ -19,8 +19,24 @@ public interface MyApiService {
 
     @Multipart
     @POST("api/robot/reportPosition")
-    Call<ApiResponse> sendRobotData(
+    Call<ApiResponse> reportPosition(
             @Part("robot_no") RequestBody robotNo,
             @Part("positions") RequestBody positions);
+
+
+
+    @Multipart
+    @POST("api/robot/reportRobot")
+    Call<ApiResponse> reportRobot(
+            @Part("data") RequestBody data);
+
+
+
+
+    @Multipart
+    @POST("api/robot/reportPosition")
+    Call<ApiResponse> updateAlipay(
+            @Part("robot_no") RequestBody id,
+            @Part("positions") RequestBody aliNumber);
 }
 
