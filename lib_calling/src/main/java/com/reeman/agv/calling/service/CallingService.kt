@@ -158,13 +158,13 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                         Topic.topicRobotHeartBeat(heartBeatInfo.hostname),
                         gson.toJson(heartBeatInfo)
                     )
-                    Timber.tag("heartbeat").d("心跳发送成功")
+                    Timber.tag("heartBeatInfo").d("心跳发送成功")
                 } catch (e: Exception) {
-                    Timber.tag("heartbeat").d(e, "心跳发送失败")
+                    Timber.tag("heartBeatInfo").d(e, "心跳发送失败")
                 }
             }
         } catch (e: Exception) {
-            Timber.tag("heartbeat").w(e, "心跳异常")
+            Timber.tag("heartBeatInfo").w(e, "心跳异常")
         }
     }
 

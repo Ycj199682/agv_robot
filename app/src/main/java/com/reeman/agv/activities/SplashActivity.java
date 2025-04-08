@@ -296,7 +296,8 @@ public class SplashActivity extends BaseActivity implements SplashContract.View 
                             try {
                                 String encrypt = AESUtil.encrypt("a123456", PackageUtils.getVersion(this) + AndroidInfoUtil.getSerialNumber() + System.currentTimeMillis());
                                 String mKey = encrypt.replaceAll("[^A-Za-z0-9]", "").substring(0, 8);
-                                String token = encrypt.substring(8);
+//                                String token = encrypt.substring(8);
+                                String token = mKey;
                                 List<String> tokens = new ArrayList<>();
                                 tokens.add(token);
                                 modeCallingSetting.key = new Pair<>(mKey, tokens);
