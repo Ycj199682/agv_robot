@@ -686,8 +686,12 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                             Timber.tag("mylog-mqtt-payload").d("taskPointModelV2List: $taskPointModelV2List")
                                             if(taskPointModelV2List != null) {
                                                 for (taskPointModelV2 in taskPointModelV2List) {
-                                                    RobotInfo.orderNo = taskPointModelV2.orderNo
-                                                    RobotInfo.payAccount = taskPointModelV2.payAccount
+                                                    if (taskPointModelV2.orderNo != null) {
+                                                        RobotInfo.orderNo = taskPointModelV2.orderNo
+                                                    }
+                                                    if (taskPointModelV2.payAccount != null) {
+                                                        RobotInfo.payAccount = taskPointModelV2.payAccount
+                                                    }
                                                     break
                                                 }
                                             }
