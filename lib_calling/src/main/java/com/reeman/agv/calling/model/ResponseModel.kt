@@ -9,6 +9,8 @@ class ResponseModel: BaseTaskModel {
 
     var order = ""
 
+    var status = 0
+
     constructor(token: String?, body: String?, code: Int, order: String) : super(token, body) {
         this.code = code
         this.order = order

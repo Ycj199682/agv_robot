@@ -1730,6 +1730,7 @@ public abstract class BaseActivity extends AppCompatActivity implements SoftKeyb
 
     @Override
     public void onNavResultEvent(@androidx.annotation.NonNull NavigationResultEvent event) {
+        //todo 机器人任务事件发生变化的监听处
         int state = event.getState();
         if (state == NavigationState.FAILURE.getValue()
                 || state == NavigationState.COMPLETE.getValue()

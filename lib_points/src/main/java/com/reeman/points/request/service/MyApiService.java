@@ -24,19 +24,38 @@ public interface MyApiService {
             @Part("positions") RequestBody positions);
 
 
-
+    /**
+     * 提交机器人信息
+     * @param data
+     * @return
+     */
     @Multipart
     @POST("api/robot/reportRobot")
     Call<ApiResponse> reportRobot(
             @Part("data") RequestBody data);
 
-
-
-
+    /**
+     * 修改订单的收款码
+     * @param order_no
+     * @param pay_account
+     * @return
+     */
     @Multipart
-    @POST("api/robot/reportPosition")
-    Call<ApiResponse> updateAlipay(
-            @Part("robot_no") RequestBody id,
-            @Part("positions") RequestBody aliNumber);
+    @POST("api/robot/setPayAccount")
+    Call<ApiResponse> setPayAccount(
+            @Part("order_no") RequestBody order_no,
+            @Part("pay_account") RequestBody pay_account);
+
+    /**
+     * 修改订单状态
+     * @param order_no
+     * @param status
+     * @return
+     */
+    @Multipart
+    @POST("api/robot/orderFinish")
+    Call<ApiResponse> orderFinish(
+            @Part("order_no") RequestBody order_no,
+            @Part("status") RequestBody status);
 }
 

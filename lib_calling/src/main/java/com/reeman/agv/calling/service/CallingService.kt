@@ -487,8 +487,8 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
     }
 
 
-    // mqtt接受任务
     override fun onMqttPayload(topic: String, payload: String) {
+        //todo mqtt接收到任务
         if (topic.isBlank() || payload.isBlank()) {
             Timber.tag("mylog-mqtt-payload").w("消息异常")
             return
@@ -688,9 +688,13 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                 for (taskPointModelV2 in taskPointModelV2List) {
                                                     if (taskPointModelV2.orderNo != null) {
                                                         RobotInfo.orderNo = taskPointModelV2.orderNo
+                                                    }else{
+                                                        RobotInfo.orderNo = ""
                                                     }
                                                     if (taskPointModelV2.payAccount != null) {
                                                         RobotInfo.payAccount = taskPointModelV2.payAccount
+                                                    }else{
+                                                        RobotInfo.payAccount = ""
                                                     }
                                                     break
                                                 }
@@ -985,6 +989,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         PointRefreshProcessor(getPointRefreshProcessingStrategy(),
             object : RefreshPointDataCallback {
                 override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
+                    // 调用任务时只传了点位
                     PointCheckUtil.filterNonExistentPoints(taskPointModelList, pointList)
                     val normalTaskEvent = NormalTaskEvent(
                         token,
@@ -1002,6 +1007,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                 }
 
                 override fun onPointsWithMapsLoadSuccess(pointsWithMapList: List<GenericPointsWithMap>) {
+                    // 调用任务时传了点位和地图
                     PointCheckUtil.filterNonExistentPointsWithMap(
                         taskPointModelList,
                         pointsWithMapList
@@ -1393,7 +1399,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         }
         if (!CallingInfo.callingModeSetting.key.second.contains(token)) return
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, SUCCESS))
+        val payload = gson.toJson(ResponseModel(token, body, SUCCESS, RobotInfo.orderNo))
         val topic = Topic.topicStartTaskResponse(RobotInfo.ROSHostname)
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->

@@ -501,6 +501,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .setIsReturnToChargePoint(isReturnToChargePoint)
                     .build();
 //            switchArrivedFragment(model);
+            //todo 到达任务点 切换页面
             switchArrivedToShowPayFragment(model);
         }
     }

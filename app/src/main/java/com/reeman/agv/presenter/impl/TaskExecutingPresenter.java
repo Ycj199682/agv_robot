@@ -27,7 +27,10 @@ import com.reeman.agv.calling.event.QRCodeTaskEvent;
 import com.reeman.agv.calling.event.RouteTaskEvent;
 import com.reeman.agv.calling.event.StartTaskCountDownEvent;
 import com.reeman.agv.calling.event.TaskEvent;
+import com.reeman.agv.calling.model.ResponseModel;
 import com.reeman.agv.calling.model.TaskDetails;
+import com.reeman.agv.calling.mqtt.MqttClient;
+import com.reeman.agv.calling.mqtt.Topic;
 import com.reeman.agv.calling.utils.CallingStateManager;
 import com.reeman.agv.calling.utils.TaskExecutingCode;
 import com.reeman.agv.utils.PointContentUtils;
@@ -1580,8 +1583,12 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                 playVoiceTip("voice_arrived_at_product_point");
                 uploadTaskRecord(0);
                 onTaskFinished(0, null, null);
+                //todo 到达出品点通知小程序
+                arrivePointResponse(Constants.ORDER_STATUS_ARRIVED_PRODUCT);
             } else if (action.equals(TaskAction.charge_point)) {//到达充电桩
                 playVoiceTip("voice_start_docking_charging_pile");
+                //todo 到达充电桩通知小程序
+                arrivePointResponse(Constants.ORDER_STATUS_ARRIVED_CHARGE);
             } else if (action.equals(TaskAction.agv_retry_point)) {
                 Timber.w("导航到重试点成功,重新导航去agv点");
                 navigationToPoint();
@@ -1606,11 +1613,36 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
                     } else {
                         arriveWorkingPoint(name, countDownTime);
                     }
+                    //todo 到达配送点通知小程序
+                    arrivePointResponse(Constants.ORDER_STATUS_ARRIVED_DELIVERY);
                 } else if (action.equals(TaskAction.route_point)) {
                     arriveWorkingPoint(name, countDownTime);
                 }
             }
         }
+    }
+
+    private void arrivePointResponse(Integer status) {
+        MqttClient mqttClient = MqttClient.getInstance();
+
+        String body = RobotInfo.INSTANCE.getROSHostname();
+
+        ResponseModel responseModel = new ResponseModel(callingInfo.getCallingModeSetting().key.getFirst(), body, 0, RobotInfo.INSTANCE.getOrderNo());
+        responseModel.setStatus(status);
+
+        String payload = new Gson().toJson(responseModel);
+
+        String topic = Topic.topicStartTaskResponse(RobotInfo.INSTANCE.getROSHostname());
+
+        mqttClient.publish(topic, payload)
+                .subscribe((v)->{
+                    Timber.tag("mylog-mqtt-task").d(
+                            "到达%s点位,响应成功,topic : %s,payload : %s ",
+                            status,
+                            topic,
+                            payload
+                    );
+                });
     }
 
     private void arriveWorkingPoint(String name, long time) {
