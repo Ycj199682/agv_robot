@@ -1,5 +1,7 @@
 package com.reeman.agv.activities;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -23,6 +25,7 @@ import com.reeman.agv.calling.event.QRCodeTaskEvent;
 import com.reeman.agv.calling.event.ReturnTaskEvent;
 import com.reeman.agv.calling.event.RouteTaskEvent;
 import com.reeman.agv.fragments.task.ArrivedFragment2;
+import com.reeman.agv.request.ServiceFactory;
 import com.reeman.commons.constants.Constants;
 import com.reeman.commons.event.AGVDockResultEvent;
 import com.reeman.commons.event.ApplyMapEvent;
@@ -53,6 +56,7 @@ import com.reeman.commons.event.AndroidNetWorkEvent;
 import com.reeman.commons.event.GreenButtonEvent;
 import com.reeman.commons.event.TimeStampEvent;
 import com.reeman.commons.eventbus.EventBus;
+import com.reeman.commons.state.RobotInfo;
 import com.reeman.dao.repository.entities.RouteWithPoints;
 import com.reeman.commons.state.TaskMode;
 import com.reeman.commons.utils.TimeUtil;
@@ -61,11 +65,18 @@ import com.reeman.agv.viewModel.TaskArrivedInfoModel;
 import com.reeman.agv.viewModel.TaskPauseInfoModel;
 import com.reeman.agv.viewModel.TaskRunningInfoModel;
 import com.reeman.agv.widgets.EasyDialog;
+import com.reeman.points.model.request.ApiResponse;
 
 import java.util.Date;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import timber.log.Timber;
 
 
@@ -410,7 +421,45 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
 
     private final ArrivedFragment2.OnArrivedBtnListener onArrivedBtnListener2 = new ArrivedFragment2.OnArrivedBtnListener() {
         @Override
-        public void onReturnBtnClick() {
+        public void onReturnBtnClick(Context context, String payaccount) {
+            new AlertDialog.Builder(context)
+                    .setTitle("警告")
+                    .setMessage("请确认您的收款账号："+payaccount)
+                    .setPositiveButton("确定", (dialog, which) -> {
+                        //todo 更新支付宝账号
+                        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
+                        RequestBody payBody = RequestBody.create(MediaType.parse("text/plain"), payaccount);
+                        Timber.tag("mylog").d("orderBody:" + orderBody + "payBody:" + payBody);
+                        ServiceFactory.getApiService(context).setPayAccount(orderBody, payBody).enqueue(
+                                new Callback<ApiResponse>() {
+                                    @Override
+                                    public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                                        if (response.isSuccessful()) {
+                                            ApiResponse apiResponse = response.body();
+                                            if (apiResponse != null) {
+                                                Timber.tag("mylog-setPayAccount").d("请求成功: %s", apiResponse.toString());
+                                            }
+                                        } else {
+                                            ResponseBody errorBody = response.errorBody();
+                                            if (errorBody != null) {
+                                                Timber.tag("mylog-setPayAccount").e("请求失败: %s", errorBody.toString());
+                                            }
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<ApiResponse> call, Throwable t) {
+                                        Timber.tag("mylog-setPayAccount").e("请求错误: %s", t.getMessage());
+                                    }
+                                }
+                        );
+                        presenter.onReturnClick();
+                    })
+                    .setNegativeButton("取消", (dialog, which) -> {
+                        // 用户点击了“取消”按钮
+                        dialog.dismiss();
+                    })
+                    .show();
         }
     };
 
@@ -470,6 +519,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
 
     @Override
     public void arrivedTargetPoint(TaskMode taskMode, String routeName, long startTime, String currentFloor, String currentPoint, String nextFloor, String nextPoint, boolean showReturnBtn, boolean showLiftUpBtn, boolean showLiftDownBtn, boolean hasNextPoint, boolean autoReturn, boolean isReturnToChargePoint) {
+        Timber.tag("mylog").d("arrivedTargetPoint");
         Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.task_fragment_view);
         if (!(currentFragment instanceof ArrivedFragment)) {
             String mode = "";
@@ -554,6 +604,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
 
     @Override
     public void showTaskFinishedView(int result, String prompt, String voice, RouteWithPoints routeWithPoints, TaskMode taskMode) {
+        Timber.tag("mylog").d("showTaskFinishedView");
         Intent intent = new Intent();
         intent.putExtra(Constants.TASK_RESULT, new Gson().toJson(new TaskResult(prompt, voice, routeWithPoints, taskMode)));
         setResult(result, intent);

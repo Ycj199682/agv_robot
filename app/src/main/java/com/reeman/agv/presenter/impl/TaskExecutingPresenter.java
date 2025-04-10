@@ -88,6 +88,7 @@ import com.reeman.agv.viewModel.TaskPauseInfoModel;
 import com.reeman.agv.widgets.EasyDialog;
 import com.reeman.dao.repository.entities.DeliveryRecord;
 import com.reeman.points.model.custom.GenericPoint;
+import com.reeman.points.model.request.ApiResponse;
 import com.reeman.points.utils.PointCacheInfo;
 
 
@@ -103,6 +104,11 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
 import timber.log.Timber;
 
 public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, DoorController.OnAccessControlListener, VoiceHelper.OnCompleteListener, MediaPlayerHelper.OnCompleteListener {
@@ -2226,6 +2232,35 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
      * @param voice  提示语
      */
     public void onTaskFinished(int result, String prompt, String voice) {
+        //todo 结束任务
+        Timber.tag("mylog").d("任务结束：" + result + ", " + prompt);
+        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
+        RequestBody statusBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(result));
+        ServiceFactory.getApiService(context).orderFinish(orderBody, statusBody).enqueue(
+                new Callback<ApiResponse>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
+                        if (response.isSuccessful()) {
+                            ApiResponse apiResponse = response.body();
+                            if (apiResponse != null) {
+                                Timber.tag("mylog-orderFinish").d("请求成功: %s", apiResponse.toString());
+                            }
+                        } else {
+                            ResponseBody errorBody = response.errorBody();
+                            if (errorBody != null) {
+                                Timber.tag("mylog-orderFinish").e("请求失败: %s", errorBody.toString());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse> call, Throwable t) {
+                        Timber.tag("mylog-orderFinish").e("请求错误: %s", t.getMessage());
+                    }
+                }
+        );
+
+
         if (isFinished) return;
         isFinished = true;
         boolean shouldRemoveFirstCallingTask = task.shouldRemoveFirstCallingTask();

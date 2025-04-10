@@ -1497,7 +1497,7 @@ public abstract class BaseActivity extends AppCompatActivity implements SoftKeyb
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == Constants.RESULT_CODE_OF_TASK) {
             String taskResultStr = data.getStringExtra(Constants.TASK_RESULT);
-            Timber.w("呼叫点位 : %s resultCode : %s taskResult : %s ", callingInfo.getTaskDetailsList().toString(), resultCode, taskResultStr);
+            Timber.tag("mylog").w("呼叫点位 : %s resultCode : %s taskResult : %s ", callingInfo.getTaskDetailsList().toString(), resultCode, taskResultStr);
             if (taskResultStr != null) {
                 TaskResult taskResult = gson.fromJson(taskResultStr, TaskResult.class);
                 if (resultCode == 0) {
@@ -1544,7 +1544,7 @@ public abstract class BaseActivity extends AppCompatActivity implements SoftKeyb
                         }
                     } else if (resultCode == 2) {
                         String code = taskResult.getPrompt();
-                        Timber.w("code: %s",code);
+                        Timber.tag("mylog").w("code: %s",code);
                         String tip;
                         if (code.equals(Code.ELEVATOR_OFFLINE)) {
                             tip = getString(R.string.exception_elevator_offline);

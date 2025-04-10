@@ -611,14 +611,14 @@ class MainActivity : BaseActivity(), MainContract.View, OnFastClickListener,
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
                     val responseData = response.body()
-                    Timber.tag("mylog-pushdata").d("更新机器人信息成功: $responseData")
+                    Timber.tag("mylog-reportRobot").d("请求成功: $responseData")
                 } else {
-                    Timber.tag("mylog-pushdata").e("更新机器人信息失败: ${response.errorBody()?.string()}")
+                    Timber.tag("mylog-reportRobot").e("请求失败: ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                Timber.tag("mylog").e("请求失败: ${t.message}")
+                Timber.tag("mylog-reportRobot").e("请求错误: ${t.message}")
             }
         })
     }
