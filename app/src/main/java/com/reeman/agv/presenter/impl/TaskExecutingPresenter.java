@@ -2233,34 +2233,6 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
      */
     public void onTaskFinished(int result, String prompt, String voice) {
         //todo 结束任务
-        Timber.tag("mylog").d("任务结束：" + result + ", " + prompt);
-        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
-        RequestBody statusBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(result));
-        ServiceFactory.getApiService(context).orderFinish(orderBody, statusBody).enqueue(
-                new Callback<ApiResponse>() {
-                    @Override
-                    public void onResponse(Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
-                        if (response.isSuccessful()) {
-                            ApiResponse apiResponse = response.body();
-                            if (apiResponse != null) {
-                                Timber.tag("mylog-orderFinish").d("请求成功: %s", apiResponse.toString());
-                            }
-                        } else {
-                            ResponseBody errorBody = response.errorBody();
-                            if (errorBody != null) {
-                                Timber.tag("mylog-orderFinish").e("请求失败: %s", errorBody.toString());
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ApiResponse> call, Throwable t) {
-                        Timber.tag("mylog-orderFinish").e("请求错误: %s", t.getMessage());
-                    }
-                }
-        );
-
-
         if (isFinished) return;
         isFinished = true;
         boolean shouldRemoveFirstCallingTask = task.shouldRemoveFirstCallingTask();

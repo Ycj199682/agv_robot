@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginStart="@dimen/dp30"
+    android:layout_marginEnd="@dimen/dp30"
+    android:background="@drawable/bg_task_pause"
+    android:gravity="center"
+    android:orientation="horizontal">
+
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/dp10"
+        android:layout_weight="2"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/dp10"
+            android:layout_weight="5"
+            android:background="@drawable/bg_task_pause_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="477dp"
+                android:layout_height="159dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/dp20"
+                android:lineSpacingMultiplier="0.8"
+                android:maxWidth="500dp"
+                android:text="请在确认付款后，点击确认按钮"
+                android:textAlignment="center"
+                android:textSize="40sp" />
+            <TextView
+                android:id="@+id/payAccountText"
+                android:layout_width="477dp"
+                android:layout_height="159dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/dp20"
+                android:lineSpacingMultiplier="0.8"
+                android:maxWidth="500dp"
+                android:textAlignment="center"
+                android:textSize="40sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/dp20"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/dp10"
+            android:paddingBottom="@dimen/dp10">
+            <TextView
+                android:id="@+id/confirm_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawableTop="@drawable/icon_yes"
+                android:drawablePadding="@dimen/dp15"
+                android:gravity="center"
+                android:text="确认"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/sp18" />
+
+            <TextView
+                android:id="@+id/ignore_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:drawableTop="@drawable/icon_yes"
+                android:drawablePadding="@dimen/dp15"
+                android:gravity="center"
+                android:text="拒收"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/sp18" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

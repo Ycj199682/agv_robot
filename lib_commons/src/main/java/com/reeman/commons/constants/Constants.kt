@@ -141,5 +141,7 @@ object Constants {
     const val ORDER_STATUS_ARRIVED_DELIVERY = 1 //订单到达配送点
     const val ORDER_STATUS_ARRIVED_PRODUCT = 2 //订单到达出品点
     const val ORDER_STATUS_ARRIVED_CHARGE = 3 //订单到达充电点
+    const val ORDER_STATUS_SUCCESS = 4 //订单完成
+    const val ORDER_STATUS_FAILED = 5 //订单失败 拒收等情况
     const val ORDER_STATUS_ERROR = -1
 }

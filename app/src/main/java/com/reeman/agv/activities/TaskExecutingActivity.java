@@ -25,6 +25,7 @@ import com.reeman.agv.calling.event.QRCodeTaskEvent;
 import com.reeman.agv.calling.event.ReturnTaskEvent;
 import com.reeman.agv.calling.event.RouteTaskEvent;
 import com.reeman.agv.fragments.task.ArrivedFragment2;
+import com.reeman.agv.fragments.task.StaffConfirmFragment;
 import com.reeman.agv.request.ServiceFactory;
 import com.reeman.commons.constants.Constants;
 import com.reeman.commons.event.AGVDockResultEvent;
@@ -384,6 +385,19 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
     }
 
 
+    // 切换至工作人员确认界面
+    private void switchWorkerFragment() {
+        layoutHeader.setVisibility(View.VISIBLE);
+        StaffConfirmFragment staffConfirmFragment = new StaffConfirmFragment(staffConfirmListenr);
+//        Bundle bundle = new Bundle();
+//        bundle.putString(Constants.KEY_TASK_ARRIVED_INFO, new Gson().toJson(model));
+//        ArrivedFragment2 arrivedFragment = new ArrivedFragment2(onArrivedBtnListener2);
+//        arrivedFragment.setArguments(bundle);
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.alpha_in, R.anim.alpha_out).replace(R.id.task_fragment_view, staffConfirmFragment).commit();
+        Timber.w("switchWorkerFragment");
+    }
+
+
     private final RunningFragment.OnRunningClickListener onRunningClickListener = new RunningFragment.OnRunningClickListener() {
         @Override
         public void onClick() {
@@ -463,6 +477,55 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         }
     };
 
+
+    private final StaffConfirmFragment.OnArrivedBtnListener staffConfirmListenr = new StaffConfirmFragment.OnArrivedBtnListener() {
+        @Override
+        public void onReturnBtnClick(Context context, Integer status) {
+            String message;
+            if (status == Constants.ORDER_STATUS_SUCCESS) {
+                message = "请确认已支付";
+            }else{
+                message = "确认拒收吗";
+            }
+            new AlertDialog.Builder(context)
+                    .setTitle("警告")
+                    .setMessage(message)
+                    .setPositiveButton("确定", (dialog, which) -> {
+                        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
+                        RequestBody statusBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(status));
+                        ServiceFactory.getApiService(context).orderFinish(orderBody, statusBody).enqueue(
+                                new Callback<ApiResponse>() {
+                                    @Override
+                                    public void onResponse(Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
+                                        if (response.isSuccessful()) {
+                                            ApiResponse apiResponse = response.body();
+                                            if (apiResponse != null) {
+                                                Timber.tag("mylog-orderFinish").d("请求成功: %s", apiResponse.toString());
+                                            }
+                                        } else {
+                                            ResponseBody errorBody = response.errorBody();
+                                            if (errorBody != null) {
+                                                Timber.tag("mylog-orderFinish").e("请求失败: %s", errorBody.toString());
+                                            }
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<ApiResponse> call, Throwable t) {
+                                        Timber.tag("mylog-orderFinish").e("请求错误: %s", t.getMessage());
+                                    }
+                                }
+                        );
+
+                        finish();
+                    })
+                    .setNegativeButton("取消", (dialog, which) -> {
+                        // 用户点击了“取消”按钮
+                        dialog.dismiss();
+                    })
+                    .show();
+        }
+    };
 
     private final PauseFragment.OnPauseClickListener onPauseClickListener = new PauseFragment.OnPauseClickListener() {
         @Override
@@ -608,7 +671,15 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         Intent intent = new Intent();
         intent.putExtra(Constants.TASK_RESULT, new Gson().toJson(new TaskResult(prompt, voice, routeWithPoints, taskMode)));
         setResult(result, intent);
-        finish();
+//        finish();
+        //todo 公众号通知工作人员
+        noticeStaff();
+        switchWorkerFragment();
+    }
+
+    private void noticeStaff() {
+
+
     }
 
     @Override
