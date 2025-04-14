@@ -2,6 +2,8 @@ package com.reeman.commons.utils;
 
 import android.util.Base64;
 
+import org.json.JSONObject;
+
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
@@ -9,6 +11,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import timber.log.Timber;
 
 public class AESUtil {
@@ -60,5 +64,16 @@ public class AESUtil {
             Timber.w(e,"aes解析失败");
             return val;
         }
+    }
+
+
+    public static RequestBody apiEncrypt(JSONObject jsonObject) {
+        String secret = "";
+        try{
+            secret = encrypt(jsonObject.toString());
+        }catch (GeneralSecurityException e) {
+            Timber.e(e, "aes encrypt error");
+        }
+        return RequestBody.create(MediaType.parse("text/plain"), secret);
     }
 }

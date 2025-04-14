@@ -56,6 +56,7 @@ import com.reeman.commons.eventbus.EventBus
 import com.reeman.commons.exceptions.ElevatorNetworkNotSettException
 import com.reeman.commons.settings.CommutingTimeSetting
 import com.reeman.commons.state.NavigationMode
+import com.reeman.commons.state.OrderInfo
 import com.reeman.commons.state.RobotInfo
 import com.reeman.commons.state.StartTaskCode
 import com.reeman.commons.state.TaskMode
@@ -488,7 +489,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
 
 
     override fun onMqttPayload(topic: String, payload: String) {
-        //todo mqtt接收到任务
+        //todo mqtt开始任务
         if (topic.isBlank() || payload.isBlank()) {
             Timber.tag("mylog-mqtt-payload").w("消息异常")
             return
@@ -531,7 +532,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                             StartTaskCode.TOKEN_EXCEPTION
                         )
                     )
-                    Timber.tag("mylog-mqtt-payload").w("token非法")
+                    Timber.tag("mylog-mqtt-payload").w("token非法\n" + key.second + ", baseModel: " + baseModel.token)
                     return
                 }
                 if (!CallingInfo.isDeviceAlive(baseModel.token)) {
@@ -598,7 +599,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                 StartTaskCode.TOKEN_EXCEPTION
                             )
                         )
-                        Timber.tag("mylog-mqtt-payload").w("token非法")
+                        Timber.tag("mylog-mqtt-payload").w("token非法\n" + key.second + ", baseTaskModel: " + baseTaskModel.token)
                         return
                     }
                     if (!CallingInfo.isDeviceAlive(baseTaskModel.token)) {
@@ -683,22 +684,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                                                     object :
                                                         TypeToken<List<TaskPointModelV2>>() {}.type
                                                 )
-                                            Timber.tag("mylog-mqtt-payload").d("taskPointModelV2List: $taskPointModelV2List")
-                                            if(taskPointModelV2List != null) {
-                                                for (taskPointModelV2 in taskPointModelV2List) {
-                                                    if (taskPointModelV2.orderNo != null) {
-                                                        RobotInfo.orderNo = taskPointModelV2.orderNo
-                                                    }else{
-                                                        RobotInfo.orderNo = ""
-                                                    }
-                                                    if (taskPointModelV2.payAccount != null) {
-                                                        RobotInfo.payAccount = taskPointModelV2.payAccount
-                                                    }else{
-                                                        RobotInfo.payAccount = ""
-                                                    }
-                                                    break
-                                                }
-                                            }
+
                                             addTask {
                                                 checkNormalTaskPoints(
                                                     baseTaskModel.token!!,
@@ -984,7 +970,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
             })
     }
 
-    private fun checkNormalTaskPoints(token: String, taskPointModelList: List<TaskPointModel>) {
+    private fun checkNormalTaskPoints(token: String, taskPointModelList: List<TaskPointModelV2>) {
         Timber.tag("mylog-mqtt-task").w("收到普通任务 token : $token, taskPointModelList: $taskPointModelList")
         PointRefreshProcessor(getPointRefreshProcessingStrategy(),
             object : RefreshPointDataCallback {
@@ -996,6 +982,23 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                         taskPointModelList.map { Pair(it.map ?: "", it.point) })
                     addTaskToQueue(TaskDetails(false, token, TaskMode.MODE_NORMAL, normalTaskEvent))
                     CallingInfo.isReadyForTask()
+
+                    if(taskPointModelList != null) {
+                        for (taskPointModelV2 in taskPointModelList) {
+                            if (taskPointModelV2.orderNo != null) {
+                                OrderInfo.getInstance().setOrderNo(taskPointModelV2.orderNo)
+                            }else{
+                                OrderInfo.getInstance().setOrderNo("")
+                            }
+                            if (taskPointModelV2.payAccount != null) {
+                                OrderInfo.getInstance().setPayAccount(taskPointModelV2.payAccount)
+                            }else{
+                                OrderInfo.getInstance().setPayAccount("")
+                            }
+                            break
+                        }
+                    }
+
                     startTaskResponse(
                         token,
                         getString(R.string.text_will_start_task, RobotInfo.ROSHostname)
@@ -1399,7 +1402,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         }
         if (!CallingInfo.callingModeSetting.key.second.contains(token)) return
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, SUCCESS, RobotInfo.orderNo))
+        val payload = gson.toJson(ResponseModel(token, body, SUCCESS, OrderInfo.getInstance().getOrderNo()))
         val topic = Topic.topicStartTaskResponse(RobotInfo.ROSHostname)
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
@@ -1459,7 +1462,7 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
             topic = Topic.topicStartTaskResponse(hostname)
         }
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, code, RobotInfo.orderNo))
+        val payload = gson.toJson(ResponseModel(token, body, code, OrderInfo.getInstance().orderNo))
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
                 Timber.tag("mylog-call").d(

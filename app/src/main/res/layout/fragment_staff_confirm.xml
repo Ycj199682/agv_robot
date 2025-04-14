@@ -1,88 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginStart="@dimen/dp30"
-    android:layout_marginEnd="@dimen/dp30"
-    android:background="@drawable/bg_task_pause"
-    android:gravity="center"
-    android:orientation="horizontal">
+    android:layout_height="match_parent">
 
-
+    <!-- 密码输入层 (默认显示) -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/password_layer"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="@dimen/dp10"
-        android:layout_weight="2"
-        android:orientation="vertical">
+        android:background="#80000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="30dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="@dimen/dp10"
-            android:layout_weight="5"
-            android:background="@drawable/bg_task_pause_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_task_pause"
+            android:orientation="vertical"
             android:gravity="center"
-            android:orientation="vertical">
-
+            android:padding="20dp">
 
             <TextView
-                android:id="@+id/title"
-                android:layout_width="477dp"
-                android:layout_height="159dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/dp20"
-                android:lineSpacingMultiplier="0.8"
-                android:maxWidth="500dp"
-                android:text="请在确认付款后，点击确认按钮"
-                android:textAlignment="center"
-                android:textSize="40sp" />
-            <TextView
-                android:id="@+id/payAccountText"
-                android:layout_width="477dp"
-                android:layout_height="159dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/dp20"
-                android:lineSpacingMultiplier="0.8"
-                android:maxWidth="500dp"
-                android:textAlignment="center"
-                android:textSize="40sp" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="@dimen/dp20"
-            android:layout_weight="2"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingTop="@dimen/dp10"
-            android:paddingBottom="@dimen/dp10">
-            <TextView
-                android:id="@+id/confirm_button"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:drawableTop="@drawable/icon_yes"
-                android:drawablePadding="@dimen/dp15"
-                android:gravity="center"
+                android:text="请输入操作密码"
+                android:textSize="24sp"
+                android:textAlignment="center"
+                android:layout_marginBottom="20dp"
+                android:textColor="@color/white"/>
+
+            <EditText
+                android:id="@+id/password_input"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:inputType="textPassword"
+                android:background="@drawable/edittext_border"
+                android:padding="10dp"/>
+
+            <Button
+                android:id="@+id/btn_confirm_password"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
                 android:text="确认"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/sp18" />
+                android:background="@drawable/btn_confirm_bg"/>
 
             <TextView
-                android:id="@+id/ignore_btn"
-                android:layout_width="0dp"
+                android:id="@+id/tv_password_error"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:drawableTop="@drawable/icon_yes"
-                android:drawablePadding="@dimen/dp15"
-                android:gravity="center"
-                android:text="拒收"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/sp18" />
+                android:textColor="#FF0000"
+                android:visibility="gone"
+                android:layout_marginTop="10dp"/>
         </LinearLayout>
-
     </LinearLayout>
 
-</LinearLayout>
+    <!-- 原内容层 (默认隐藏) -->
+    <LinearLayout
+        android:id="@+id/content_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/dp30"
+        android:layout_marginEnd="@dimen/dp30"
+        android:background="@drawable/bg_task_pause"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <!-- 这里是你原来的布局内容 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="@dimen/dp10"
+            android:layout_weight="2"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/dp10"
+                android:layout_weight="5"
+                android:background="@drawable/bg_task_pause_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="477dp"
+                    android:layout_height="159dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/dp20"
+                    android:lineSpacingMultiplier="0.8"
+                    android:maxWidth="500dp"
+                    android:text="确认向该账户转账后，点击确认按钮完成订单"
+                    android:textAlignment="center"
+                    android:textSize="40sp" />
+                <TextView
+                    android:id="@+id/payAccountText"
+                    android:layout_width="477dp"
+                    android:layout_height="159dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/dp20"
+                    android:lineSpacingMultiplier="0.8"
+                    android:maxWidth="500dp"
+                    android:textAlignment="center"
+                    android:textSize="40sp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/dp20"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingTop="@dimen/dp10"
+                android:paddingBottom="@dimen/dp10">
+                <TextView
+                    android:id="@+id/confirm_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawableTop="@drawable/icon_yes"
+                    android:drawablePadding="@dimen/dp15"
+                    android:gravity="center"
+                    android:text="确认"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/sp18" />
+
+                <TextView
+                    android:id="@+id/ignore_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawableTop="@drawable/icon_yes"
+                    android:drawablePadding="@dimen/dp15"
+                    android:gravity="center"
+                    android:text="拒收"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/sp18" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

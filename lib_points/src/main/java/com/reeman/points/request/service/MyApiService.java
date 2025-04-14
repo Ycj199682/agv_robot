@@ -36,26 +36,26 @@ public interface MyApiService {
 
     /**
      * 修改订单的收款码
-     * @param order_no
-     * @param pay_account
+     * 加密
+     *  order_no
+     *  pay_account
      * @return
      */
     @Multipart
     @POST("api/robot/setPayAccount")
     Call<ApiResponse> setPayAccount(
-            @Part("order_no") RequestBody order_no,
-            @Part("pay_account") RequestBody pay_account);
+            @Part("data") RequestBody data);
 
     /**
      * 修改订单状态
-     * @param order_no
-     * @param status
+     * 加密
+     * order_no
+     * status
      * @return
      */
     @Multipart
     @POST("api/robot/orderFinish")
     Call<ApiResponse> orderFinish(
-            @Part("order_no") RequestBody order_no,
-            @Part("status") RequestBody status);
+            @Part("data") RequestBody data);
 }
 

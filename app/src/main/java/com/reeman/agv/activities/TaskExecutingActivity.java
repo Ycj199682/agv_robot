@@ -7,6 +7,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -57,7 +58,8 @@ import com.reeman.commons.event.AndroidNetWorkEvent;
 import com.reeman.commons.event.GreenButtonEvent;
 import com.reeman.commons.event.TimeStampEvent;
 import com.reeman.commons.eventbus.EventBus;
-import com.reeman.commons.state.RobotInfo;
+import com.reeman.commons.state.OrderInfo;
+import com.reeman.commons.utils.AESUtil;
 import com.reeman.dao.repository.entities.RouteWithPoints;
 import com.reeman.commons.state.TaskMode;
 import com.reeman.commons.utils.TimeUtil;
@@ -68,7 +70,12 @@ import com.reeman.agv.viewModel.TaskRunningInfoModel;
 import com.reeman.agv.widgets.EasyDialog;
 import com.reeman.points.model.request.ApiResponse;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.security.GeneralSecurityException;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -374,6 +381,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         Timber.w("arrive target point :\n %s", model.toString());
     }
 
+    // 切换至用户确认界面
     private void switchArrivedToShowPayFragment(TaskArrivedInfoModel model) {
         layoutHeader.setVisibility(View.VISIBLE);
         Bundle bundle = new Bundle();
@@ -386,15 +394,15 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
 
 
     // 切换至工作人员确认界面
-    private void switchWorkerFragment() {
+    private void switchStaffFragment() {
         layoutHeader.setVisibility(View.VISIBLE);
         StaffConfirmFragment staffConfirmFragment = new StaffConfirmFragment(staffConfirmListenr);
 //        Bundle bundle = new Bundle();
-//        bundle.putString(Constants.KEY_TASK_ARRIVED_INFO, new Gson().toJson(model));
-//        ArrivedFragment2 arrivedFragment = new ArrivedFragment2(onArrivedBtnListener2);
-//        arrivedFragment.setArguments(bundle);
+//        bundle.putString("pay_account", payAccount);
+//        Timber.tag("mylog").d("pay_account:" + payAccount);
+//        staffConfirmFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.alpha_in, R.anim.alpha_out).replace(R.id.task_fragment_view, staffConfirmFragment).commit();
-        Timber.w("switchWorkerFragment");
+        Timber.w("switchStaffFragment");
     }
 
 
@@ -441,10 +449,22 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .setMessage("请确认您的收款账号："+payaccount)
                     .setPositiveButton("确定", (dialog, which) -> {
                         //todo 更新支付宝账号
-                        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
-                        RequestBody payBody = RequestBody.create(MediaType.parse("text/plain"), payaccount);
-                        Timber.tag("mylog").d("orderBody:" + orderBody + "payBody:" + payBody);
-                        ServiceFactory.getApiService(context).setPayAccount(orderBody, payBody).enqueue(
+                        OrderInfo.getInstance().setPayAccount(payaccount);
+                        Timber.tag("mylog-setPayAccount").d("orderBody:" + OrderInfo.getInstance().getOrderNo() + "payBody:" + OrderInfo.getInstance().getPayAccount());
+
+                        JSONObject dataObj = new JSONObject();
+                        try {
+                            dataObj.put("order_no", OrderInfo.getInstance().getOrderNo());
+                            dataObj.put("pay_account", payaccount);
+                        } catch (JSONException e) {
+                            Timber.e(e, "setPayAccount json format error");
+                            throw new RuntimeException(e);
+                        }
+
+                        Timber.tag("mylog-setPayAccount").d("params: "+dataObj);
+                        RequestBody positionsBody = AESUtil.apiEncrypt(dataObj);
+
+                        ServiceFactory.getApiService(context).setPayAccount(positionsBody).enqueue(
                                 new Callback<ApiResponse>() {
                                     @Override
                                     public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
@@ -491,9 +511,18 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .setTitle("警告")
                     .setMessage(message)
                     .setPositiveButton("确定", (dialog, which) -> {
-                        RequestBody orderBody = RequestBody.create(MediaType.parse("text/plain"), RobotInfo.INSTANCE.getOrderNo());
-                        RequestBody statusBody = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(status));
-                        ServiceFactory.getApiService(context).orderFinish(orderBody, statusBody).enqueue(
+                        JSONObject dataObj = new JSONObject();
+                        try {
+                            dataObj.put("order_no", OrderInfo.getInstance().getOrderNo());
+                            dataObj.put("status", status);
+                        } catch (JSONException e) {
+                            Timber.e(e, "orderFinish json format error");
+                            throw new RuntimeException(e);
+                        }
+                        Timber.tag("mylog-orderFinish").d("params: "+dataObj);
+                        RequestBody positionsBody = AESUtil.apiEncrypt(dataObj);
+
+                        ServiceFactory.getApiService(context).orderFinish(positionsBody).enqueue(
                                 new Callback<ApiResponse>() {
                                     @Override
                                     public void onResponse(Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
@@ -516,7 +545,8 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                                     }
                                 }
                         );
-
+                        OrderInfo.getInstance().setPayAccount("");
+                        OrderInfo.getInstance().setOrderNo("");
                         finish();
                     })
                     .setNegativeButton("取消", (dialog, which) -> {
@@ -674,7 +704,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
 //        finish();
         //todo 公众号通知工作人员
         noticeStaff();
-        switchWorkerFragment();
+        switchStaffFragment();
     }
 
     private void noticeStaff() {

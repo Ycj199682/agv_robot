@@ -58,6 +58,7 @@ import com.reeman.commons.settings.BackgroundMusicSetting;
 import com.reeman.commons.settings.ElevatorSetting;
 import com.reeman.commons.settings.ObstacleSetting;
 import com.reeman.commons.state.NavigationMode;
+import com.reeman.commons.state.OrderInfo;
 import com.reeman.commons.state.RobotInfo;
 import com.reeman.commons.state.SpecialAreaType;
 import com.reeman.commons.state.StartTaskCode;
@@ -1633,7 +1634,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
 
         String body = RobotInfo.INSTANCE.getROSHostname();
 
-        ResponseModel responseModel = new ResponseModel(callingInfo.getCallingModeSetting().key.getFirst(), body, 0, RobotInfo.INSTANCE.getOrderNo());
+        ResponseModel responseModel = new ResponseModel(callingInfo.getCallingModeSetting().key.getFirst(), body, 0, OrderInfo.getInstance().getOrderNo());
         responseModel.setStatus(status);
 
         String payload = new Gson().toJson(responseModel);
