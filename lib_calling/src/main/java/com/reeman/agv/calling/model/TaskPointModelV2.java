@@ -22,13 +22,29 @@ public class TaskPointModelV2 extends TaskPointModel{
         this.payAccount = payAccount;
     }
 
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo) {
+        this.orderNo = orderNo;
+    }
+
+    public String getPayAccount() {
+        return payAccount;
+    }
+
+    public void setPayAccount(String payAccount) {
+        this.payAccount = payAccount;
+    }
+
     @Override
     public String toString() {
         return "TaskPointModelV2{" +
                 "map='" + getMap() + '\'' +
                 ", point='" + getPoint() + '\'' +
-                ", orderNo='" + orderNo + '\'' +
-                ", payAccount='" + payAccount + '\'' +
+                ", orderNo='" + getOrderNo() + '\'' +
+                ", payAccount='" + getPayAccount() + '\'' +
                 '}';
     }
 }

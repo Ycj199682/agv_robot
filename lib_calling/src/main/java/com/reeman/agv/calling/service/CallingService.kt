@@ -974,22 +974,14 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         PointRefreshProcessor(getPointRefreshProcessingStrategy(),
             object : RefreshPointDataCallback {
                 override fun onPointsLoadSuccess(pointList: List<GenericPoint>) {
-                    // 调用任务时只传了点位
-                    PointCheckUtil.filterNonExistentPoints(taskPointModelList, pointList)
-                    val normalTaskEvent = NormalTaskEvent(
-                        token,
-                        taskPointModelList.map { Pair(it.map ?: "", it.point) })
-                    addTaskToQueue(TaskDetails(false, token, TaskMode.MODE_NORMAL, normalTaskEvent))
-                    CallingInfo.isReadyForTask()
-
-                    if(taskPointModelList != null) {
+                    if (taskPointModelList != null) {
                         for (taskPointModelV2 in taskPointModelList) {
-                            if (taskPointModelV2.orderNo != null) {
+                            if (taskPointModelV2.orderNo != null && taskPointModelV2.orderNo.isNotEmpty()) {
                                 SpManager.getInstance().edit().putString(Constants.KEY_ORDER_NO, taskPointModelV2.orderNo).apply()
                             }else{
                                 SpManager.getInstance().edit().putString(Constants.KEY_ORDER_NO, "").apply()
                             }
-                            if (taskPointModelV2.payAccount != null) {
+                            if (taskPointModelV2.payAccount != null && taskPointModelV2.payAccount.isNotEmpty()) {
                                 SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, taskPointModelV2.payAccount).apply()
                             }else{
                                 SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, "").apply()
@@ -997,7 +989,13 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                             break
                         }
                     }
-
+                    // 调用任务时只传了点位
+                    PointCheckUtil.filterNonExistentPoints(taskPointModelList, pointList)
+                    val normalTaskEvent = NormalTaskEvent(
+                        token,
+                        taskPointModelList.map { Pair(it.map ?: "", it.point) })
+                    addTaskToQueue(TaskDetails(false, token, TaskMode.MODE_NORMAL, normalTaskEvent))
+                    CallingInfo.isReadyForTask()
                     startTaskResponse(
                         token,
                         getString(R.string.text_will_start_task, RobotInfo.ROSHostname)
