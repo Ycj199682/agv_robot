@@ -7,7 +7,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -25,7 +24,7 @@ import com.reeman.agv.calling.event.NormalTaskEvent;
 import com.reeman.agv.calling.event.QRCodeTaskEvent;
 import com.reeman.agv.calling.event.ReturnTaskEvent;
 import com.reeman.agv.calling.event.RouteTaskEvent;
-import com.reeman.agv.fragments.task.ArrivedFragment2;
+import com.reeman.agv.fragments.task.UserConfirmFragment;
 import com.reeman.agv.fragments.task.StaffConfirmFragment;
 import com.reeman.agv.request.ServiceFactory;
 import com.reeman.commons.constants.Constants;
@@ -58,8 +57,8 @@ import com.reeman.commons.event.AndroidNetWorkEvent;
 import com.reeman.commons.event.GreenButtonEvent;
 import com.reeman.commons.event.TimeStampEvent;
 import com.reeman.commons.eventbus.EventBus;
-import com.reeman.commons.state.OrderInfo;
 import com.reeman.commons.utils.AESUtil;
+import com.reeman.commons.utils.SpManager;
 import com.reeman.dao.repository.entities.RouteWithPoints;
 import com.reeman.commons.state.TaskMode;
 import com.reeman.commons.utils.TimeUtil;
@@ -73,13 +72,10 @@ import com.reeman.points.model.request.ApiResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.GeneralSecurityException;
 import java.util.Date;
-import java.util.regex.Pattern;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -382,11 +378,11 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
     }
 
     // 切换至用户确认界面
-    private void switchArrivedToShowPayFragment(TaskArrivedInfoModel model) {
+    private void switchUserFragment(TaskArrivedInfoModel model) {
         layoutHeader.setVisibility(View.VISIBLE);
         Bundle bundle = new Bundle();
         bundle.putString(Constants.KEY_TASK_ARRIVED_INFO, new Gson().toJson(model));
-        ArrivedFragment2 arrivedFragment = new ArrivedFragment2(onArrivedBtnListener2);
+        UserConfirmFragment arrivedFragment = new UserConfirmFragment(onArrivedBtnListener2);
         arrivedFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.alpha_in, R.anim.alpha_out).replace(R.id.task_fragment_view, arrivedFragment).commit();
         Timber.w("arrive target point :\n %s", model.toString());
@@ -397,10 +393,6 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
     private void switchStaffFragment() {
         layoutHeader.setVisibility(View.VISIBLE);
         StaffConfirmFragment staffConfirmFragment = new StaffConfirmFragment(staffConfirmListenr);
-//        Bundle bundle = new Bundle();
-//        bundle.putString("pay_account", payAccount);
-//        Timber.tag("mylog").d("pay_account:" + payAccount);
-//        staffConfirmFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.alpha_in, R.anim.alpha_out).replace(R.id.task_fragment_view, staffConfirmFragment).commit();
         Timber.w("switchStaffFragment");
     }
@@ -441,20 +433,25 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         }
     };
 
-    private final ArrivedFragment2.OnArrivedBtnListener onArrivedBtnListener2 = new ArrivedFragment2.OnArrivedBtnListener() {
+    private final UserConfirmFragment.OnArrivedBtnListener onArrivedBtnListener2 = new UserConfirmFragment.OnArrivedBtnListener() {
         @Override
         public void onReturnBtnClick(Context context, String payaccount) {
+            String cueWord = "请确认您的收款账号："+payaccount + "，若支付宝账号错误导致未收到钱款，平台概不负责";
+            if (payaccount == null || payaccount.isEmpty()) {
+                cueWord = "您未填写收款信息，本次回收将会视为公益回收";
+            }
+
             new AlertDialog.Builder(context)
                     .setTitle("警告")
-                    .setMessage("请确认您的收款账号："+payaccount)
+                    .setMessage(cueWord)
                     .setPositiveButton("确定", (dialog, which) -> {
                         //todo 更新支付宝账号
-                        OrderInfo.getInstance().setPayAccount(payaccount);
-                        Timber.tag("mylog-setPayAccount").d("orderBody:" + OrderInfo.getInstance().getOrderNo() + "payBody:" + OrderInfo.getInstance().getPayAccount());
+                        SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, payaccount).apply();
+                        String orderNo = SpManager.getInstance().getString(Constants.KEY_ORDER_NO, "");
 
                         JSONObject dataObj = new JSONObject();
                         try {
-                            dataObj.put("order_no", OrderInfo.getInstance().getOrderNo());
+                            dataObj.put("order_no", orderNo);
                             dataObj.put("pay_account", payaccount);
                         } catch (JSONException e) {
                             Timber.e(e, "setPayAccount json format error");
@@ -503,7 +500,11 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
         public void onReturnBtnClick(Context context, Integer status) {
             String message;
             if (status == Constants.ORDER_STATUS_SUCCESS) {
-                message = "请确认已支付";
+                if (SpManager.getInstance().getString(Constants.KEY_PAY_ACCOUNT, "").isEmpty()) {
+                    message = "该用户收款信息未填写，请确认是否结束订单";
+                }else{
+                    message = "请确认已支付";
+                }
             }else{
                 message = "确认拒收吗";
             }
@@ -513,7 +514,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .setPositiveButton("确定", (dialog, which) -> {
                         JSONObject dataObj = new JSONObject();
                         try {
-                            dataObj.put("order_no", OrderInfo.getInstance().getOrderNo());
+                            dataObj.put("order_no", SpManager.getInstance().getString(Constants.KEY_ORDER_NO, ""));
                             dataObj.put("status", status);
                         } catch (JSONException e) {
                             Timber.e(e, "orderFinish json format error");
@@ -545,8 +546,8 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                                     }
                                 }
                         );
-                        OrderInfo.getInstance().setPayAccount("");
-                        OrderInfo.getInstance().setOrderNo("");
+                        SpManager.getInstance().edit().putString(Constants.KEY_ORDER_NO, "").apply();
+                        SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, "").apply();
                         finish();
                     })
                     .setNegativeButton("取消", (dialog, which) -> {
@@ -645,7 +646,7 @@ public class TaskExecutingActivity extends BaseActivity implements TaskExecuting
                     .build();
 //            switchArrivedFragment(model);
             //todo 到达任务点 切换页面
-            switchArrivedToShowPayFragment(model);
+            switchUserFragment(model);
         }
     }
 

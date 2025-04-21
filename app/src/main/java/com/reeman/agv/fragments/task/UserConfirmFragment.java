@@ -4,9 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Patterns;
 import android.view.View;
@@ -21,20 +18,17 @@ import com.reeman.agv.R;
 import com.reeman.agv.base.BaseFragment;
 import com.reeman.agv.viewModel.TaskArrivedInfoModel;
 import com.reeman.commons.constants.Constants;
-import com.reeman.commons.state.OrderInfo;
-import com.reeman.commons.state.RobotInfo;
-import com.reeman.commons.utils.StringUtils;
+import com.reeman.commons.utils.SpManager;
 
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-public class ArrivedFragment2 extends BaseFragment {
+public class UserConfirmFragment extends BaseFragment {
 
     private TextView tvCountDownTime;
 
     private final OnArrivedBtnListener listener;
 
-    public ArrivedFragment2(OnArrivedBtnListener listener) {
+    public UserConfirmFragment(OnArrivedBtnListener listener) {
         this.listener = listener;
     }
 
@@ -89,7 +83,7 @@ public class ArrivedFragment2 extends BaseFragment {
         };
         payAccount.setFilters(new InputFilter[]{filter});
 
-        payAccount.setText(OrderInfo.getInstance().getPayAccount());
+        payAccount.setText(SpManager.getInstance().getString(Constants.KEY_PAY_ACCOUNT, ""));
         tvReturn.setVisibility(taskArrivedInfoModel.getShowReturnButton() ? View.VISIBLE : View.GONE);
         tvReturn.setOnClickListener(this);
     }

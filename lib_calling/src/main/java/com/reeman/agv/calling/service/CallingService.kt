@@ -56,7 +56,6 @@ import com.reeman.commons.eventbus.EventBus
 import com.reeman.commons.exceptions.ElevatorNetworkNotSettException
 import com.reeman.commons.settings.CommutingTimeSetting
 import com.reeman.commons.state.NavigationMode
-import com.reeman.commons.state.OrderInfo
 import com.reeman.commons.state.RobotInfo
 import com.reeman.commons.state.StartTaskCode
 import com.reeman.commons.state.TaskMode
@@ -986,14 +985,14 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
                     if(taskPointModelList != null) {
                         for (taskPointModelV2 in taskPointModelList) {
                             if (taskPointModelV2.orderNo != null) {
-                                OrderInfo.getInstance().setOrderNo(taskPointModelV2.orderNo)
+                                SpManager.getInstance().edit().putString(Constants.KEY_ORDER_NO, taskPointModelV2.orderNo).apply()
                             }else{
-                                OrderInfo.getInstance().setOrderNo("")
+                                SpManager.getInstance().edit().putString(Constants.KEY_ORDER_NO, "").apply()
                             }
                             if (taskPointModelV2.payAccount != null) {
-                                OrderInfo.getInstance().setPayAccount(taskPointModelV2.payAccount)
+                                SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, taskPointModelV2.payAccount).apply()
                             }else{
-                                OrderInfo.getInstance().setPayAccount("")
+                                SpManager.getInstance().edit().putString(Constants.KEY_PAY_ACCOUNT, "").apply()
                             }
                             break
                         }
@@ -1402,7 +1401,8 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
         }
         if (!CallingInfo.callingModeSetting.key.second.contains(token)) return
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, SUCCESS, OrderInfo.getInstance().getOrderNo()))
+        val payload = gson.toJson(SpManager.getInstance().getString(Constants.KEY_ORDER_NO, "")
+            ?.let { ResponseModel(token, body, SUCCESS, it) })
         val topic = Topic.topicStartTaskResponse(RobotInfo.ROSHostname)
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
@@ -1462,7 +1462,8 @@ class CallingService : Service(), MqttClient.OnMqttPayloadCallback {
             topic = Topic.topicStartTaskResponse(hostname)
         }
         val mqttClient = MqttClient.getInstance()
-        val payload = gson.toJson(ResponseModel(token, body, code, OrderInfo.getInstance().orderNo))
+        val payload = gson.toJson(SpManager.getInstance().getString(Constants.KEY_ORDER_NO, "")
+            ?.let { ResponseModel(token, body, code, it) })
         mqttClient.publish(topic, payload)
             .subscribe({ _ ->
                 Timber.tag("mylog-call").d(

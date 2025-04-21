@@ -144,4 +144,8 @@ object Constants {
     const val ORDER_STATUS_SUCCESS = 4 //订单完成
     const val ORDER_STATUS_FAILED = 5 //订单失败 拒收等情况
     const val ORDER_STATUS_ERROR = -1
+
+
+    const val KEY_ORDER_NO = "KEY_ORDER_NO"
+    const val KEY_PAY_ACCOUNT = "KEY_PAY_ACCOUNT"
 }

@@ -58,7 +58,6 @@ import com.reeman.commons.settings.BackgroundMusicSetting;
 import com.reeman.commons.settings.ElevatorSetting;
 import com.reeman.commons.settings.ObstacleSetting;
 import com.reeman.commons.state.NavigationMode;
-import com.reeman.commons.state.OrderInfo;
 import com.reeman.commons.state.RobotInfo;
 import com.reeman.commons.state.SpecialAreaType;
 import com.reeman.commons.state.StartTaskCode;
@@ -89,7 +88,6 @@ import com.reeman.agv.viewModel.TaskPauseInfoModel;
 import com.reeman.agv.widgets.EasyDialog;
 import com.reeman.dao.repository.entities.DeliveryRecord;
 import com.reeman.points.model.custom.GenericPoint;
-import com.reeman.points.model.request.ApiResponse;
 import com.reeman.points.utils.PointCacheInfo;
 
 
@@ -105,11 +103,6 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
 import timber.log.Timber;
 
 public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, DoorController.OnAccessControlListener, VoiceHelper.OnCompleteListener, MediaPlayerHelper.OnCompleteListener {
@@ -1634,7 +1627,7 @@ public class TaskExecutingPresenter implements TaskExecutingContract.Presenter, 
 
         String body = RobotInfo.INSTANCE.getROSHostname();
 
-        ResponseModel responseModel = new ResponseModel(callingInfo.getCallingModeSetting().key.getFirst(), body, 0, OrderInfo.getInstance().getOrderNo());
+        ResponseModel responseModel = new ResponseModel(callingInfo.getCallingModeSetting().key.getFirst(), body, 0, SpManager.getInstance().getString(Constants.KEY_ORDER_NO, ""));
         responseModel.setStatus(status);
 
         String payload = new Gson().toJson(responseModel);

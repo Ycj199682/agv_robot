@@ -13,14 +13,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.reeman.agv.R;
 import com.reeman.agv.base.BaseFragment;
-import com.reeman.agv.viewModel.TaskArrivedInfoModel;
 import com.reeman.commons.constants.Constants;
-import com.reeman.commons.state.OrderInfo;
-
-import timber.log.Timber;
+import com.reeman.commons.utils.SpManager;
 
 public class StaffConfirmFragment extends BaseFragment {
 
@@ -80,13 +76,17 @@ public class StaffConfirmFragment extends BaseFragment {
                 }
             }
         });
-        
-        
+
+
         TextView payAccount = view.findViewById(R.id.payAccountText);
         TextView confirmBtn = view.findViewById(R.id.confirm_button);
         TextView ignoreBtn = view.findViewById(R.id.ignore_btn);
 
-        payAccount.setText(OrderInfo.getInstance().getPayAccount());
+        if (SpManager.getInstance().getString(Constants.KEY_PAY_ACCOUNT, "").isEmpty()) {
+            payAccount.setText("该用户未填写收款信息");
+        }else{
+            payAccount.setText(SpManager.getInstance().getString(Constants.KEY_PAY_ACCOUNT, ""));
+        }
 
         confirmBtn.setOnClickListener(this);
         ignoreBtn.setOnClickListener(this);
